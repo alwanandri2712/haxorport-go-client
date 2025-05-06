@@ -1,0 +1,6 @@
+# Konfigurasi Haxorport Client
+server_address: control.haxorport.online
+control_port: 443
+auth_token: ""  # Token autentikasi jika diperlukan
+log_level: debug  # Gunakan debug untuk melihat lebih banyak informasi
+log_file: ""    # Kosong untuk output ke stdout
