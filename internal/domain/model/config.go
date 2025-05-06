@@ -33,8 +33,8 @@ type Config struct {
 // NewConfig membuat instance Config baru dengan nilai default
 func NewConfig() *Config {
 	return &Config{
-		ServerAddress: "localhost",
-		ControlPort:   8080,
+		ServerAddress: "control.haxorport.online",
+		ControlPort:   443,
 		LogLevel:      LogLevelInfo,
 		LogFile:       "",
 		Tunnels:       []TunnelConfig{},

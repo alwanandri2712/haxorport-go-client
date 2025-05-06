@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -47,7 +48,8 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	serverURL := fmt.Sprintf("ws://%s:%d/control", c.serverAddr, c.serverPort)
+	// Gunakan wss:// untuk koneksi SSL dan path /ws sesuai konfigurasi Nginx
+	serverURL := fmt.Sprintf("wss://%s:%d/ws", c.serverAddr, c.serverPort)
 	c.logger.Info("Menghubungkan ke server: %s", serverURL)
 
 	// Parse URL
@@ -56,8 +58,14 @@ func (c *Client) Connect() error {
 		return fmt.Errorf("URL tidak valid: %v", err)
 	}
 
+	// Buat dialer dengan konfigurasi TLS yang mengabaikan verifikasi sertifikat
+	dialer := websocket.DefaultDialer
+	dialer.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: true, // Opsional: Gunakan false di produksi jika sertifikat valid
+	}
+
 	// Buat koneksi WebSocket
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	conn, _, err := dialer.Dial(u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("gagal terhubung ke server: %v", err)
 	}

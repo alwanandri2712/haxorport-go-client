@@ -127,8 +127,8 @@ case $TUNNEL_TYPE in
             echo -e "Version                      1.0.0"
             echo -e "Region                       Local"
             echo -e "Latency                      0ms"
-            echo -e "Web Interface                http://127.0.0.1:8081"
-            echo -e "Forwarding                   \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+            echo -e "Web Interface                https://control.haxorport.online"
+            echo -e "Forwarding                   \033[1;36mhttps://$SUBDOMAIN.haxorport.online\033[0m -> \033[1;33m$TARGET\033[0m"
             echo ""
 
             # Hitung statistik koneksi
@@ -189,10 +189,11 @@ case $TUNNEL_TYPE in
                     exit 1
                 fi
 
-                # Ambil log HTTP request, response, dan warning dari server
-                http_proxy_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'HTTP Proxy:' | tail -n 10 2>/dev/null)
-                http_response_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'HTTP Response:' | tail -n 10 2>/dev/null)
-                http_warning_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'WARN:.*Tunnel tidak ditemukan' | tail -n 10 2>/dev/null)
+                # Untuk server remote, kita tidak bisa membaca log langsung
+                # Kita akan mengandalkan log yang dikirim oleh server melalui WebSocket
+                http_proxy_logs=""
+                http_response_logs=""
+                http_warning_logs=""
 
                 # Bersihkan log file jika terlalu besar (lebih dari 1000 baris)
                 if [ -f "$LOG_FILE" ]; then
@@ -214,24 +215,24 @@ case $TUNNEL_TYPE in
                     echo -e "Version                      1.0.0"
                     echo -e "Region                       Local"
                     echo -e "Latency                      0ms"
-                    echo -e "Web Interface                http://127.0.0.1:8081"
-                    echo -e "Forwarding                   \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+                    echo -e "Web Interface                https://control.haxorport.online"
+                    echo -e "Forwarding                   \033[1;36mhttps://$SUBDOMAIN.haxorport.online\033[0m -> \033[1;33m$TARGET\033[0m"
                     echo ""
 
                     if [ -f "$LOG_FILE" ]; then
                         # Tampilkan informasi minimal
                         echo -e "\nInformasi:"
-                        echo -e "  URL: \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m"
+                        echo -e "  URL: \033[1;36mhttps://$SUBDOMAIN.haxorport.online\033[0m"
                         echo -e "  Target: \033[1;33m$TARGET\033[0m"
 
                         # Tampilkan cara menggunakan minimal
                         echo -e "\nCara Menggunakan:"
-                        echo -e "  1. Akses \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m di browser"
-                        echo -e "  2. Atau gunakan curl: \033[1;33mcurl -H \"Host: $SUBDOMAIN.haxorport.local\" http://127.0.0.1:8081\033[0m"
+                        echo -e "  1. Akses \033[1;36mhttps://$SUBDOMAIN.haxorport.online\033[0m di browser"
+                        echo -e "  2. Atau gunakan curl: \033[1;33mcurl https://$SUBDOMAIN.haxorport.online\033[0m"
 
                         # Tampilkan tips minimal
                         echo -e "\nTips:"
-                        echo -e "  1. Tambahkan entri di /etc/hosts: \033[1;33m127.0.0.1 $SUBDOMAIN.haxorport.local\033[0m"
+                        echo -e "  1. Domain sudah dikonfigurasi dengan wildcard SSL, tidak perlu konfigurasi tambahan"
                         echo -e "  2. Gunakan \033[1;36mCtrl+C\033[0m untuk menghentikan tunnel"
                     fi
 
@@ -251,7 +252,7 @@ case $TUNNEL_TYPE in
                     # Tampilkan kembali informasi penting
                     echo -e "\033[1;36mhaxorport\033[0m"
                     echo ""
-                    echo -e "Forwarding: \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+                    echo -e "Forwarding: \033[1;36mhttps://$SUBDOMAIN.haxorport.online\033[0m -> \033[1;33m$TARGET\033[0m"
                     echo ""
                 fi
 
@@ -467,8 +468,8 @@ case $TUNNEL_TYPE in
                 echo -e "Version                      1.0.0"
                 echo -e "Region                       Local"
                 echo -e "Latency                      0ms"
-                echo -e "Web Interface                http://127.0.0.1:8081"
-                echo -e "Forwarding                   tcp://0.0.0.0:$REMOTE_PORT -> localhost:$PORT"
+                echo -e "Web Interface                https://control.haxorport.online"
+                echo -e "Forwarding                   tcp://tcp.haxorport.online:$REMOTE_PORT -> localhost:$PORT"
                 echo ""
                 # Tidak menampilkan statistik koneksi
                 echo ""
@@ -537,8 +538,8 @@ case $TUNNEL_TYPE in
                 echo -e "Version                      1.0.0"
                 echo -e "Region                       Local"
                 echo -e "Latency                      0ms"
-                echo -e "Web Interface                http://127.0.0.1:8081"
-                echo -e "Forwarding                   tcp://0.0.0.0:$ALLOCATED_PORT -> localhost:$PORT"
+                echo -e "Web Interface                https://control.haxorport.online"
+                echo -e "Forwarding                   tcp://tcp.haxorport.online:$ALLOCATED_PORT -> localhost:$PORT"
                 echo ""
                 # Tidak menampilkan statistik koneksi
                 echo ""
