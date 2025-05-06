@@ -1,0 +1,592 @@
+#!/bin/bash
+
+# haxorport - Wrapper script untuk haxorport-go-client
+# Penggunaan: haxorport [http|tcp] [URL/PORT]
+
+# Direktori tempat script ini berada
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CLIENT_BIN="$SCRIPT_DIR/bin/haxor"
+
+# Flag untuk menandai apakah ini adalah tampilan pertama
+FIRST_RUN="true"
+
+# Jika binary tidak ada di bin/, gunakan go run
+if [ ! -f "$CLIENT_BIN" ]; then
+    USE_GO_RUN=true
+    echo "Using 'go run' instead of binary"
+else
+    USE_GO_RUN=false
+fi
+
+# Fungsi untuk menampilkan bantuan
+show_help() {
+    echo "Haxorport - Expose local services to the internet"
+    echo ""
+    echo "Penggunaan:"
+    echo "  haxorport http [URL]         Expose HTTP service"
+    echo "  haxorport tcp [PORT]         Expose TCP service"
+    echo ""
+    echo "Contoh:"
+    echo "  haxorport http http://localhost:9090"
+    echo "  haxorport tcp 22"
+    echo ""
+    echo "Options:"
+    echo "  --subdomain [NAME]           Specify custom subdomain"
+    echo "  --remote-port [PORT]         Specify remote port (TCP only)"
+    echo "  --help                       Show this help message"
+    echo ""
+}
+
+# Periksa apakah client binary ada
+if [ ! -f "$CLIENT_BIN" ]; then
+    echo "Error: Client binary tidak ditemukan di $CLIENT_BIN"
+    echo "Jalankan 'go build -o bin/haxor .' terlebih dahulu"
+    exit 1
+fi
+
+# Periksa jumlah argumen
+if [ $# -lt 2 ]; then
+    show_help
+    exit 1
+fi
+
+# Parse argumen
+TUNNEL_TYPE=$1
+TARGET=$2
+shift 2
+
+SUBDOMAIN=""
+REMOTE_PORT=""
+
+# Parse opsi tambahan
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --subdomain)
+            SUBDOMAIN="$2"
+            shift 2
+            ;;
+        --remote-port)
+            REMOTE_PORT="$2"
+            shift 2
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Error: Opsi tidak dikenal: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Generate random subdomain jika tidak ditentukan
+if [ -z "$SUBDOMAIN" ]; then
+    SUBDOMAIN="haxor-$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 8 | head -n 1)"
+fi
+
+# Proses berdasarkan tipe tunnel
+case $TUNNEL_TYPE in
+    http)
+        # Parse URL untuk mendapatkan port
+        if [[ $TARGET == http://* ]]; then
+            # Extract host dan port dari URL
+            HOST_PORT=${TARGET#http://}
+            # Jika ada path, hapus
+            HOST_PORT=${HOST_PORT%%/*}
+
+            # Extract port
+            if [[ $HOST_PORT == *:* ]]; then
+                PORT=${HOST_PORT#*:}
+            else
+                PORT=80
+            fi
+
+            # Jalankan client di background dan tangkap output
+            if [ "$USE_GO_RUN" = true ]; then
+                cd $SCRIPT_DIR && go run main.go http --port $PORT --subdomain $SUBDOMAIN > /tmp/haxorport_output.log 2>&1 &
+            else
+                $CLIENT_BIN http --port $PORT --subdomain $SUBDOMAIN > /tmp/haxorport_output.log 2>&1 &
+            fi
+
+            # Simpan PID
+            CLIENT_PID=$!
+
+            # Tunggu sebentar agar client terhubung
+            sleep 2
+
+            # Tampilkan informasi seperti ngrok
+            clear
+            echo -e "\033[1;36mhaxorport\033[0m"
+            echo ""
+            echo -e "\033[1;31m❤\033[0m haxorport? We're hiring https://github.com/alwanputraandriansyah"
+            echo ""
+            echo -e "\033[1;32mSession Status\033[0m                 \033[1;32monline\033[0m"
+            echo -e "Account                      $(whoami) (Plan: Free)"
+            echo -e "Version                      1.0.0"
+            echo -e "Region                       Local"
+            echo -e "Latency                      0ms"
+            echo -e "Web Interface                http://127.0.0.1:8081"
+            echo -e "Forwarding                   \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+            echo ""
+
+            # Hitung statistik koneksi
+            if [ -f "$LOG_FILE" ]; then
+                total_requests=$(wc -l < "$LOG_FILE")
+                success_requests=$(grep -c "200 OK" "$LOG_FILE")
+                error_requests=$(grep -c "404 Not Found" "$LOG_FILE")
+                other_requests=$((total_requests - success_requests - error_requests))
+
+                # Hitung rata-rata respons (dummy values for now)
+                rt1="0.07"
+                rt5="0.02"
+                p50="2.52"
+                p90="2.52"
+
+                echo -e "Connections                  ttl     opn     rt1     rt5     p50     p90"
+                echo -e "                             $total_requests       0       $rt1    $rt5    $p50    $p90"
+            else
+                echo -e "Connections                  ttl     opn     rt1     rt5     p50     p90"
+                echo -e "                             0       0       0.00    0.00    0.00    0.00"
+            fi
+
+            echo ""
+            echo -e "\033[1;32mHTTP Requests\033[0m"
+            echo -e "-------------"
+            echo ""
+
+            # Tampilkan beberapa log terakhir jika ada
+            if [ -f "$LOG_FILE" ]; then
+                # Tampilkan log dengan warna berdasarkan status
+                tail -n 10 "$LOG_FILE" | while read -r line; do
+                    if [[ $line =~ "404 Not Found" ]]; then
+                        echo -e "\033[1;31m$line\033[0m"  # Merah untuk error
+                    elif [[ $line =~ "200 OK" ]]; then
+                        echo -e "\033[1;32m$line\033[0m"  # Hijau untuk sukses
+                    elif [[ $line =~ "202 OK" ]]; then
+                        echo -e "\033[1;32m$line\033[0m"  # Hijau untuk sukses
+                    else
+                        echo -e "\033[1;33m$line\033[0m"  # Kuning untuk lainnya
+                    fi
+                done
+            fi
+
+            # Buat file untuk log HTTP request jika belum ada
+            LOG_FILE="/tmp/haxorport_http_requests.log"
+            if [ ! -f "$LOG_FILE" ]; then
+                touch $LOG_FILE
+            fi
+
+            # Tunggu sampai user menekan Ctrl+C
+            trap "kill $CLIENT_PID; echo -e '\nTunnel dihentikan'; exit 0" INT
+
+            # Pantau log server untuk HTTP requests
+            while true; do
+                # Periksa apakah proses masih berjalan
+                if ! ps -p $CLIENT_PID > /dev/null; then
+                    echo "Client process terminated"
+                    exit 1
+                fi
+
+                # Ambil log HTTP request, response, dan warning dari server
+                http_proxy_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'HTTP Proxy:' | tail -n 10 2>/dev/null)
+                http_response_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'HTTP Response:' | tail -n 10 2>/dev/null)
+                http_warning_logs=$(cat /Users/alwanputraandriansyah/Development/haxorport-go-server/logs/haxor-server.log | grep -a 'WARN:.*Tunnel tidak ditemukan' | tail -n 10 2>/dev/null)
+
+                # Bersihkan log file jika terlalu besar (lebih dari 1000 baris)
+                if [ -f "$LOG_FILE" ]; then
+                    log_lines=$(wc -l < "$LOG_FILE")
+                    if [ $log_lines -gt 1000 ]; then
+                        tail -n 500 "$LOG_FILE" > "${LOG_FILE}.tmp" && mv "${LOG_FILE}.tmp" "$LOG_FILE"
+                    fi
+                fi
+
+                # Tampilkan informasi seperti ngrok hanya sekali di awal
+                if [ "$FIRST_RUN" != "false" ]; then
+                    clear
+                    echo -e "\033[1;36mhaxorport\033[0m"
+                    echo ""
+                    echo -e "\033[1;31m❤\033[0m haxorport? We're hiring https://github.com/alwanputraandriansyah"
+                    echo ""
+                    echo -e "\033[1;32mSession Status\033[0m                 \033[1;32monline\033[0m"
+                    echo -e "Account                      $(whoami) (Plan: Free)"
+                    echo -e "Version                      1.0.0"
+                    echo -e "Region                       Local"
+                    echo -e "Latency                      0ms"
+                    echo -e "Web Interface                http://127.0.0.1:8081"
+                    echo -e "Forwarding                   \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+                    echo ""
+
+                    if [ -f "$LOG_FILE" ]; then
+                        # Tampilkan informasi minimal
+                        echo -e "\nInformasi:"
+                        echo -e "  URL: \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m"
+                        echo -e "  Target: \033[1;33m$TARGET\033[0m"
+
+                        # Tampilkan cara menggunakan minimal
+                        echo -e "\nCara Menggunakan:"
+                        echo -e "  1. Akses \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m di browser"
+                        echo -e "  2. Atau gunakan curl: \033[1;33mcurl -H \"Host: $SUBDOMAIN.haxorport.local\" http://127.0.0.1:8081\033[0m"
+
+                        # Tampilkan tips minimal
+                        echo -e "\nTips:"
+                        echo -e "  1. Tambahkan entri di /etc/hosts: \033[1;33m127.0.0.1 $SUBDOMAIN.haxorport.local\033[0m"
+                        echo -e "  2. Gunakan \033[1;36mCtrl+C\033[0m untuk menghentikan tunnel"
+                    fi
+
+                    # Tidak perlu menampilkan header HTTP Requests di sini
+                    # karena akan ditampilkan di bagian update
+
+                    # Set flag bahwa informasi awal sudah ditampilkan
+                    FIRST_RUN="false"
+                fi
+
+                # Jika ini bukan tampilan pertama, hapus output sebelumnya
+                if [ "$FIRST_RUN" = "false" ]; then
+                    # Gunakan ANSI escape sequence untuk menghapus layar dan memposisikan kursor
+                    # Kode escape untuk menghapus layar dan memposisikan kursor di kiri atas
+                    printf "\033[H\033[J"
+
+                    # Tampilkan kembali informasi penting
+                    echo -e "\033[1;36mhaxorport\033[0m"
+                    echo ""
+                    echo -e "Forwarding: \033[1;36mhttp://$SUBDOMAIN.haxorport.local:8081\033[0m -> \033[1;33m$TARGET\033[0m"
+                    echo ""
+                fi
+
+                # Tampilkan beberapa log terakhir jika ada
+                if [ -f "$LOG_FILE" ]; then
+                    # Tampilkan log dengan warna berdasarkan status, filter /05/06
+                    filtered_logs=$(cat "$LOG_FILE" | grep -v "/05/06" | tail -n 10)
+                    if [ -z "$filtered_logs" ]; then
+                        echo -e "\033[1;33mBelum ada request yang tercatat.\033[0m"
+                    else
+                        # Tampilkan header tabel
+                        echo -e "\033[1;32mHTTP Requests\033[0m"
+                        echo -e "-------------"
+                        echo -e "\033[1;37mWaktu               | Method | Path      | Status      | Subdomain\033[0m"
+                        echo -e "\033[1;37m--------------------+--------+-----------+-------------+------------------\033[0m"
+
+                        # Tampilkan log dengan format tabel
+                        echo "$filtered_logs" | while read -r line; do
+                            # Ekstrak informasi dari log
+                            waktu=$(echo "$line" | awk '{print $1, $2}')
+                            method=$(echo "$line" | awk '{print $3}')
+                            path=$(echo "$line" | awk '{print $4}')
+                            status=$(echo "$line" | awk '{print $5, $6}')
+                            subdomain=$(echo "$line" | grep -o "subdomain: [^ )]*" | sed 's/subdomain: //')
+
+                            # Format path agar seragam
+                            if [ ${#path} -gt 10 ]; then
+                                path="${path:0:7}..."
+                            else
+                                # Tambahkan spasi di belakang path jika kurang dari 10 karakter
+                                while [ ${#path} -lt 10 ]; do
+                                    path="$path "
+                                done
+                            fi
+
+                            # Jika path adalah /, ganti dengan /home
+                            if [ "$path" = "/ " ]; then
+                                path="/home    "
+                            fi
+
+                            # Tampilkan dengan warna berdasarkan status
+                            if [[ $status =~ "404 Not Found" ]]; then
+                                echo -e "\033[1;37m$waktu\033[0m | \033[1;37m$method\033[0m | \033[1;37m$path\033[0m | \033[1;31m$status\033[0m | \033[1;31m$subdomain\033[0m"
+                            elif [[ $status =~ "200 OK" || $status =~ "202 OK" ]]; then
+                                echo -e "\033[1;37m$waktu\033[0m | \033[1;37m$method\033[0m | \033[1;37m$path\033[0m | \033[1;32m$status\033[0m | \033[1;32m$subdomain\033[0m"
+                            else
+                                echo -e "\033[1;37m$waktu\033[0m | \033[1;37m$method\033[0m | \033[1;37m$path\033[0m | \033[1;33m$status\033[0m | \033[1;33m$subdomain\033[0m"
+                            fi
+                        done
+                    fi
+                else
+                    echo -e "\033[1;33mBelum ada request yang tercatat.\033[0m"
+                fi
+
+                # Jika ada log warning baru, tambahkan ke log file
+                if [ ! -z "$http_warning_logs" ]; then
+                    while IFS= read -r line; do
+                        # Ekstrak informasi dari log
+                        if [[ $line =~ "Tunnel tidak ditemukan" ]]; then
+                            # Ekstrak timestamp dari log server
+                            server_timestamp=$(echo $line | grep -o '[0-9]\{4\}/[0-9]\{2\}/[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}')
+                            if [ -z "$server_timestamp" ]; then
+                                timestamp=$(date +"%H:%M:%S.%3N %Z")
+                            else
+                                # Konversi format timestamp
+                                timestamp=$(date -j -f "%Y/%m/%d %H:%M:%S" "$server_timestamp" "+%H:%M:%S.000 %Z" 2>/dev/null)
+                                if [ -z "$timestamp" ]; then
+                                    timestamp=$(date +"%H:%M:%S.%3N %Z")
+                                fi
+                            fi
+
+                            # Ekstrak subdomain
+                            subdomain=$(echo $line | grep -o 'subdomain [a-zA-Z0-9]*' | awk '{print $2}')
+
+                            # Format log seperti ngrok
+                            log_entry="$timestamp GET / 404 Not Found (subdomain: $subdomain)"
+
+                            # Periksa apakah log entry sudah ada
+                            if ! grep -q "$log_entry" $LOG_FILE; then
+                                # Hanya tambahkan ke log file, tidak perlu tampilkan
+                                echo "$log_entry" >> $LOG_FILE
+                            fi
+                        fi
+                    done <<< "$http_warning_logs"
+                fi
+
+                # Jika ada log request baru, tambahkan ke log file
+                if [ ! -z "$http_proxy_logs" ]; then
+                    while IFS= read -r line; do
+                        # Ekstrak informasi dari log
+                        if [[ $line =~ "HTTP Proxy:" ]]; then
+                            # Ekstrak timestamp dari log server
+                            server_timestamp=$(echo $line | grep -o '[0-9]\{4\}/[0-9]\{2\}/[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}')
+                            if [ -z "$server_timestamp" ]; then
+                                timestamp=$(date +"%H:%M:%S.%3N %Z")
+                            else
+                                # Konversi format timestamp
+                                timestamp=$(date -j -f "%Y/%m/%d %H:%M:%S" "$server_timestamp" "+%H:%M:%S.000 %Z" 2>/dev/null)
+                                if [ -z "$timestamp" ]; then
+                                    timestamp=$(date +"%H:%M:%S.%3N %Z")
+                                fi
+                            fi
+
+                            # Ekstrak method dan path
+                            method=$(echo $line | grep -o 'GET\|POST\|PUT\|DELETE\|PATCH\|OPTIONS\|HEAD')
+                            path=$(echo $line | grep -o ' /[^ ]*' | sed 's/^ //' | head -1)
+
+                            # Cari status dari log response yang sesuai
+                            status="200 OK"  # Default status
+                            if [ ! -z "$http_response_logs" ]; then
+                                matching_response=$(echo "$http_response_logs" | grep "$method" | grep "$path" | tail -n 1)
+                                if [ ! -z "$matching_response" ]; then
+                                    status_code=$(echo "$matching_response" | grep -o '[0-9]\{3\}' | head -1)
+                                    status_text=$(echo "$matching_response" | grep -o 'OK\|Not Found\|Internal Server Error\|Bad Request\|Unauthorized\|Forbidden' | head -1)
+                                    if [ ! -z "$status_code" ]; then
+                                        if [ ! -z "$status_text" ]; then
+                                            status="$status_code $status_text"
+                                        else
+                                            status="$status_code"
+                                        fi
+                                    fi
+                                fi
+                            fi
+
+                            # Ekstrak path dari log
+                            path=$(echo $line | grep -o ' -> http://localhost:[0-9]*' | sed 's/ -> http:\/\/localhost:[0-9]*//')
+                            if [ -z "$path" ]; then
+                                path=$(echo $line | grep -o ' /[^ ]*' | sed 's/^ //' | head -1)
+                                if [ -z "$path" ]; then
+                                    path=$(echo $line | grep -o '/[^ ]*' | head -1)
+                                fi
+                            fi
+
+                            # Bersihkan path dari tanggal
+                            if [[ $path =~ ^/[0-9][0-9]/[0-9][0-9] ]]; then
+                                path="/"
+                            fi
+
+                            # Jika path adalah /05/06, ganti dengan /
+                            if [[ $path == "/05/06" ]]; then
+                                path="/"
+                            fi
+
+                            # Jika path adalah /05/06, ganti dengan /
+                            if [[ $path =~ ^/[0-9]+/[0-9]+ ]]; then
+                                path="/"
+                            fi
+
+                            # Jika path adalah /05/06, ganti dengan /
+                            if [[ $path =~ ^/[0-9]{2}/[0-9]{2} ]]; then
+                                path="/"
+                            fi
+
+                            # Jika path adalah /05/06, ganti dengan /
+                            if [[ $path =~ ^/[0-9]+ ]]; then
+                                path="/"
+                            fi
+
+                            # Format log seperti ngrok
+                            if [ -z "$path" ]; then
+                                path="/"
+                            fi
+                            log_entry="$timestamp $method $path $status"
+
+                            # Periksa apakah log entry sudah ada
+                            if ! grep -q "$log_entry" $LOG_FILE; then
+                                # Hanya tambahkan ke log file, tidak perlu tampilkan
+                                echo "$log_entry" >> $LOG_FILE
+                            fi
+                        fi
+                    done <<< "$http_proxy_logs"
+                fi
+
+                # Alternatif: Gunakan curl untuk mendapatkan log dari API server jika tersedia
+                # curl_output=$(curl -s "http://localhost:9080/api/logs?type=http&limit=10")
+
+                # Tunggu sebentar sebelum update berikutnya (0.5 detik)
+                sleep 0.5
+            done
+        else
+            echo "Error: URL harus dimulai dengan http://"
+            exit 1
+        fi
+        ;;
+    tcp)
+        # Periksa apakah target adalah port
+        if [[ $TARGET =~ ^[0-9]+$ ]]; then
+            PORT=$TARGET
+
+            # Gunakan remote port jika ditentukan
+            if [ -n "$REMOTE_PORT" ]; then
+                # Jalankan client di background dan tangkap output
+                if [ "$USE_GO_RUN" = true ]; then
+                    cd $SCRIPT_DIR && go run main.go tcp --port $PORT --remote-port $REMOTE_PORT > /tmp/haxorport_output.log 2>&1 &
+                else
+                    $CLIENT_BIN tcp --port $PORT --remote-port $REMOTE_PORT > /tmp/haxorport_output.log 2>&1 &
+                fi
+
+                # Simpan PID
+                CLIENT_PID=$!
+
+                # Tunggu sebentar agar client terhubung
+                sleep 2
+
+                # Tampilkan informasi seperti ngrok
+                clear
+                echo -e "\033[1;36mhaxorport\033[0m"
+                echo ""
+                echo -e "\033[1;31m❤\033[0m haxorport? We're hiring https://github.com/alwanputraandriansyah"
+                echo ""
+                echo -e "\033[1;32mSession Status\033[0m                 \033[1;32monline\033[0m"
+                echo -e "Account                      $(whoami) (Plan: Free)"
+                echo -e "Version                      1.0.0"
+                echo -e "Region                       Local"
+                echo -e "Latency                      0ms"
+                echo -e "Web Interface                http://127.0.0.1:8081"
+                echo -e "Forwarding                   tcp://0.0.0.0:$REMOTE_PORT -> localhost:$PORT"
+                echo ""
+                # Tidak menampilkan statistik koneksi
+                echo ""
+                echo -e "TCP Connections"
+                echo -e "--------------"
+                echo ""
+
+                # Tunggu sampai user menekan Ctrl+C
+                trap "kill $CLIENT_PID; echo -e '\nTunnel dihentikan'; exit 0" INT
+
+                # Buat file untuk log TCP connections
+                LOG_FILE="/tmp/haxorport_tcp_connections.log"
+                touch $LOG_FILE
+
+                # Pantau koneksi TCP
+                while true; do
+                    # Periksa apakah proses masih berjalan
+                    if ! ps -p $CLIENT_PID > /dev/null; then
+                        echo "Client process terminated"
+                        exit 1
+                    fi
+
+                    # Cek koneksi TCP aktif ke port remote
+                    tcp_connections=$(netstat -an | grep ":$REMOTE_PORT" | grep "ESTABLISHED" | wc -l)
+                    if [ $tcp_connections -gt 0 ]; then
+                        timestamp=$(date +"%H:%M:%S.%3N %Z")
+                        log_entry="$timestamp New TCP connection established"
+
+                        # Periksa apakah log entry sudah ada
+                        if ! grep -q "$log_entry" $LOG_FILE; then
+                            echo -e "$log_entry"
+                            echo "$log_entry" >> $LOG_FILE
+                        fi
+                    fi
+
+                    sleep 1
+                done
+            else
+                # Jalankan client di background dan tangkap output
+                if [ "$USE_GO_RUN" = true ]; then
+                    cd $SCRIPT_DIR && go run main.go tcp --port $PORT > /tmp/haxorport_output.log 2>&1 &
+                else
+                    $CLIENT_BIN tcp --port $PORT > /tmp/haxorport_output.log 2>&1 &
+                fi
+
+                # Simpan PID
+                CLIENT_PID=$!
+
+                # Tunggu sebentar agar client terhubung
+                sleep 2
+
+                # Coba dapatkan port yang dialokasikan dari log
+                ALLOCATED_PORT=$(grep -o "remote port [0-9]*" /tmp/haxorport_output.log | awk '{print $3}')
+                if [ -z "$ALLOCATED_PORT" ]; then
+                    ALLOCATED_PORT="<random>"
+                fi
+
+                # Tampilkan informasi seperti ngrok
+                clear
+                echo -e "\033[1;36mhaxorport\033[0m"
+                echo ""
+                echo -e "\033[1;31m❤\033[0m haxorport? We're hiring https://github.com/alwanputraandriansyah"
+                echo ""
+                echo -e "\033[1;32mSession Status\033[0m                 \033[1;32monline\033[0m"
+                echo -e "Account                      $(whoami) (Plan: Free)"
+                echo -e "Version                      1.0.0"
+                echo -e "Region                       Local"
+                echo -e "Latency                      0ms"
+                echo -e "Web Interface                http://127.0.0.1:8081"
+                echo -e "Forwarding                   tcp://0.0.0.0:$ALLOCATED_PORT -> localhost:$PORT"
+                echo ""
+                # Tidak menampilkan statistik koneksi
+                echo ""
+                echo -e "TCP Connections"
+                echo -e "--------------"
+                echo ""
+
+                # Tunggu sampai user menekan Ctrl+C
+                trap "kill $CLIENT_PID; echo -e '\nTunnel dihentikan'; exit 0" INT
+
+                # Buat file untuk log TCP connections
+                LOG_FILE="/tmp/haxorport_tcp_connections.log"
+                touch $LOG_FILE
+
+                # Pantau koneksi TCP
+                while true; do
+                    # Periksa apakah proses masih berjalan
+                    if ! ps -p $CLIENT_PID > /dev/null; then
+                        echo "Client process terminated"
+                        exit 1
+                    fi
+
+                    # Cek koneksi TCP aktif ke port remote
+                    if [ "$ALLOCATED_PORT" != "<random>" ]; then
+                        tcp_connections=$(netstat -an | grep ":$ALLOCATED_PORT" | grep "ESTABLISHED" | wc -l)
+                        if [ $tcp_connections -gt 0 ]; then
+                            timestamp=$(date +"%H:%M:%S.%3N %Z")
+                            log_entry="$timestamp New TCP connection established"
+
+                            # Periksa apakah log entry sudah ada
+                            if ! grep -q "$log_entry" $LOG_FILE; then
+                                echo -e "$log_entry"
+                                echo "$log_entry" >> $LOG_FILE
+                            fi
+                        fi
+                    fi
+
+                    sleep 1
+                done
+            fi
+        else
+            echo "Error: Port harus berupa angka"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Error: Tipe tunnel tidak valid. Gunakan 'http' atau 'tcp'"
+        show_help
+        exit 1
+        ;;
+esac

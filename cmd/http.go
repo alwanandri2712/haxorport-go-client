@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/haxorport/haxor-client/internal/domain/model"
 	"github.com/spf13/cobra"
@@ -23,13 +26,55 @@ var (
 
 // httpCmd adalah command untuk membuat HTTP tunnel
 var httpCmd = &cobra.Command{
-	Use:   "http",
+	Use:   "http [target_url]",
 	Short: "Membuat HTTP tunnel",
 	Long: `Membuat HTTP tunnel untuk mengekspos layanan HTTP lokal ke internet.
 Contoh:
+  haxor http http://localhost:8080
   haxor http --port 8080 --subdomain myapp
   haxor http --port 3000 --auth basic --username user --password pass`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Periksa apakah ada argumen URL
+		if len(args) > 0 {
+			// Parse URL dari argumen
+			targetURL := args[0]
+
+			// Ekstrak port dan host dari URL
+			u, err := url.Parse(targetURL)
+			if err != nil {
+				fmt.Printf("Error: URL tidak valid: %v\n", err)
+				os.Exit(1)
+			}
+
+			// Ekstrak port dari URL
+			port := u.Port()
+			if port == "" {
+				// Default port berdasarkan skema
+				if u.Scheme == "https" {
+					port = "443"
+				} else {
+					port = "80"
+				}
+			}
+
+			// Konversi port ke integer
+			portInt, err := strconv.Atoi(port)
+			if err != nil {
+				fmt.Printf("Error: Port tidak valid: %v\n", err)
+				os.Exit(1)
+			}
+
+			// Set port lokal
+			httpLocalPort = portInt
+
+			// Generate subdomain otomatis jika tidak ditentukan
+			if httpSubdomain == "" {
+				// Gunakan timestamp untuk membuat subdomain unik
+				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+				httpSubdomain = fmt.Sprintf("haxor-%x", timestamp%0xFFFFFF)
+			}
+		}
+
 		// Validasi parameter
 		if httpLocalPort <= 0 {
 			fmt.Println("Error: Port lokal harus lebih besar dari 0")
@@ -87,6 +132,8 @@ Contoh:
 		if auth != nil {
 			fmt.Printf("Autentikasi: %s\n", auth.Type)
 		}
+
+		// Tampilkan informasi tunnel tanpa statistik
 
 		// Tunggu sinyal untuk keluar
 		sigCh := make(chan os.Signal, 1)

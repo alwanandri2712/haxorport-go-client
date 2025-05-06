@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-haxorport
+# haxorport - Allowing this file as it's a wrapper script
 
 # Test binary, built with `go test -c`
 *.test

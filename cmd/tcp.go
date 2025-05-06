@@ -52,6 +52,8 @@ Contoh:
 		fmt.Printf("Port Remote: %d\n", tunnel.RemotePort)
 		fmt.Printf("Port Lokal: %d\n", tunnel.Config.LocalPort)
 
+		// Tampilkan informasi tunnel tanpa statistik
+
 		// Tunggu sinyal untuk keluar
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
