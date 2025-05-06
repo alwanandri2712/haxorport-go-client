@@ -1,0 +1,24 @@
+# Konfigurasi Klien Haxorport
+
+# Alamat server haxorport
+server_address: "localhost"
+
+# Port untuk control plane
+control_port: 8080
+
+# Token untuk autentikasi ke server
+auth_token: "rahasia"
+
+# Level logging (debug, info, warn, error)
+log_level: "debug"
+
+# Path ke file log (kosong untuk stdout)
+log_file: "/home/ubuntu/haxorport/logs/client.log"
+
+# Daftar tunnel yang akan dibuat saat startup
+tunnels:
+  # Tunnel HTTP untuk web server pengujian
+  - name: "test-web"
+    type: "http"
+    local_port: 3000
+    subdomain: "test"

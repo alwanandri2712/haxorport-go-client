@@ -1,0 +1,34 @@
+# Konfigurasi contoh untuk Haxorport Client
+
+# Alamat server Haxorport
+server_address: "localhost"
+
+# Port untuk control plane
+control_port: 8080
+
+# Token autentikasi
+auth_token: "your-auth-token"
+
+# Level logging (debug, info, warn, error)
+log_level: "info"
+
+# Path ke file log (kosong untuk stdout)
+log_file: ""
+
+# Daftar tunnel yang akan dibuat saat startup
+tunnels:
+  # Contoh tunnel HTTP
+  - name: "web"
+    type: "http"
+    local_port: 8080
+    subdomain: "myapp"
+    auth:
+      type: "basic"
+      username: "user"
+      password: "pass"
+
+  # Contoh tunnel TCP
+  - name: "ssh"
+    type: "tcp"
+    local_port: 22
+    remote_port: 2222
