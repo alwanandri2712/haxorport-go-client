@@ -4,7 +4,7 @@ Haxor Client adalah aplikasi klien untuk layanan Haxorport, yang memungkinkan An
 
 ## Fitur
 
-- Tunnel HTTP: Ekspos layanan web lokal dengan subdomain kustom
+- Tunnel HTTP/HTTPS: Ekspos layanan web lokal dengan subdomain kustom, mendukung protokol HTTP dan HTTPS
 - Tunnel TCP: Ekspos layanan TCP lokal dengan port remote
 - Autentikasi: Lindungi tunnel dengan autentikasi basic atau header
 - Konfigurasi: Kelola konfigurasi dengan mudah melalui CLI
@@ -100,6 +100,37 @@ Dengan autentikasi header:
 ```
 haxor http --port 8080 --subdomain myapp --auth header --header "X-API-Key" --value "secret-key"
 ```
+
+### Tunnel HTTPS
+
+Haxorport sekarang mendukung tunnel HTTPS secara otomatis. Ketika klien terhubung ke server, server akan mendeteksi apakah permintaan datang melalui HTTP atau HTTPS dan meneruskan informasi ini ke klien. Klien kemudian akan menggunakan skema yang sesuai saat membuat permintaan ke layanan lokal.
+
+Untuk menggunakan tunnel HTTPS:
+
+1. Pastikan server haxorport dikonfigurasi dengan benar untuk mendukung HTTPS
+2. Jalankan klien seperti biasa:
+   ```
+   haxorport http http://localhost:9090 -c config.yaml
+   ```
+3. Akses layanan Anda melalui HTTPS:
+   ```
+   https://your-subdomain.haxorport.online
+   ```
+
+### Solusi Sementara dengan SSH Tunnel
+
+Jika Anda mengalami masalah koneksi dengan tunnel HTTPS, Anda dapat menggunakan SSH tunnel sebagai solusi sementara:
+
+```bash
+ssh -R <remote_port>:localhost:<local_port> -i <path_to_key> -N -f user@server
+```
+
+Contoh:
+```bash
+ssh -R 9090:localhost:9090 -i /path/to/key.pem -N -f root@example.com
+```
+
+Ini akan meneruskan permintaan yang diterima di port 9090 di server ke port 9090 di komputer lokal Anda.
 
 ### Tunnel TCP
 
