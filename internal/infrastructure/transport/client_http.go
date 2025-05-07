@@ -20,12 +20,14 @@ func (c *Client) HandleHTTPRequestMessage(msg *model.Message) error {
 
 	c.logger.Info("Menerima permintaan HTTP: %s %s", request.Method, request.URL)
 
-	// Buat permintaan HTTP ke layanan lokal
+	// Buat permintaan HTTP ke layanan lokal di komputer klien
 	// Gunakan skema yang diterima dari server (http atau https)
 	scheme := "http"
 	if request.Scheme != "" {
 		scheme = request.Scheme
 	}
+	
+	// Gunakan localhost di komputer klien, bukan di server
 	targetURL := fmt.Sprintf("%s://localhost:%d%s", scheme, request.LocalPort, request.URL)
 	c.logger.Info("Mengirim permintaan ke layanan lokal: %s", targetURL)
 	httpReq, err := http.NewRequest(request.Method, targetURL, bytes.NewReader(request.Body))
@@ -46,13 +48,15 @@ func (c *Client) HandleHTTPRequestMessage(msg *model.Message) error {
 	httpReq.Header.Set("X-Forwarded-Proto", scheme) // Gunakan skema yang diterima dari server
 	httpReq.Header.Set("X-Forwarded-For", request.RemoteAddr)
 
-	// Kirim permintaan
+	// Kirim permintaan ke layanan lokal melalui koneksi balik
+	c.logger.Info("Membuat koneksi HTTP ke layanan lokal dengan metode %s", request.Method)
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		c.logger.Error("Gagal mengirim permintaan HTTP: %v", err)
+		c.logger.Error("Gagal mengirim permintaan HTTP ke layanan lokal: %v", err)
 		return c.sendHTTPErrorResponse(request.ID, err)
 	}
+	c.logger.Info("Berhasil terhubung ke layanan lokal, status: %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 	defer resp.Body.Close()
 
 	// Baca body respons
