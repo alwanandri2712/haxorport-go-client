@@ -16,22 +16,35 @@ import (
 // Client adalah implementasi port.Client
 type Client struct {
 	serverAddr   string
-	serverPort   int
+	controlPort  int
+	dataPort     int
+	authEnabled  bool
 	authToken    string
+	tlsEnabled   bool
+	tlsCert      string
+	tlsKey       string
+	baseDomain   string
 	conn         *websocket.Conn
 	isConnected  bool
 	reconnecting bool
 	mutex        sync.Mutex
 	logger       port.Logger
 	handlers     map[model.MessageType]func(*model.Message) error
+	subdomain    string // Subdomain yang ditentukan oleh pengguna
 }
 
-// NewClient membuat instance Client baru
-func NewClient(serverAddress string, controlPort int, authToken string, logger port.Logger) *Client {
+// NewClient membuat instance Client baru dari konfigurasi
+func NewClient(config *model.Config, logger port.Logger) *Client {
 	return &Client{
-		serverAddr:   serverAddress,
-		serverPort:   controlPort,
-		authToken:    authToken,
+		serverAddr:   config.ServerAddress,
+		controlPort:  config.ControlPort,
+		dataPort:     config.DataPort,
+		authEnabled:  config.AuthEnabled,
+		authToken:    config.AuthToken,
+		tlsEnabled:   config.TLSEnabled,
+		tlsCert:      config.TLSCert,
+		tlsKey:       config.TLSKey,
+		baseDomain:   config.BaseDomain,
 		isConnected:  false,
 		reconnecting: false,
 		logger:       logger,
@@ -48,20 +61,46 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	// Gunakan wss:// untuk koneksi SSL dan path /ws sesuai konfigurasi Nginx
-	serverURL := fmt.Sprintf("wss://%s:%d/ws", c.serverAddr, c.serverPort)
+	// Gunakan protokol yang sesuai berdasarkan konfigurasi TLS
+	var protocol string
+
+	// Buat dialer
+	dialer := websocket.DefaultDialer
+
+	// Konfigurasi TLS berdasarkan pengaturan
+	if c.tlsEnabled {
+		// Gunakan wss:// untuk koneksi HTTPS/SSL
+		protocol = "wss"
+
+		// Konfigurasi TLS
+		tlsConfig := &tls.Config{}
+
+		// Jika sertifikat dan kunci disediakan, gunakan itu
+		if c.tlsCert != "" && c.tlsKey != "" {
+			cert, err := tls.LoadX509KeyPair(c.tlsCert, c.tlsKey)
+			if err != nil {
+				return fmt.Errorf("gagal memuat sertifikat TLS: %v", err)
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		} else {
+			// Jika tidak ada sertifikat, abaikan verifikasi sertifikat
+			tlsConfig.InsecureSkipVerify = true
+		}
+
+		dialer.TLSClientConfig = tlsConfig
+	} else {
+		// Gunakan ws:// untuk koneksi HTTP biasa
+		protocol = "ws"
+	}
+
+	// Buat URL WebSocket
+	serverURL := fmt.Sprintf("%s://%s:%d/control", protocol, c.serverAddr, c.controlPort)
 	c.logger.Info("Menghubungkan ke server: %s", serverURL)
 
 	// Parse URL
 	u, err := url.Parse(serverURL)
 	if err != nil {
 		return fmt.Errorf("URL tidak valid: %v", err)
-	}
-
-	// Buat dialer dengan konfigurasi TLS yang mengabaikan verifikasi sertifikat
-	dialer := websocket.DefaultDialer
-	dialer.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: true, // Opsional: Gunakan false di produksi jika sertifikat valid
 	}
 
 	// Buat koneksi WebSocket
@@ -90,11 +129,14 @@ func (c *Client) Connect() error {
 		return fmt.Errorf("gagal mengkonversi pesan autentikasi ke JSON: %v", err)
 	}
 
-	// Kirim pesan langsung tanpa memanggil sendMessage (untuk menghindari deadlock)
-	if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		c.logger.Error("Gagal mengirim pesan autentikasi: %v", err)
-		c.Close()
-		return fmt.Errorf("gagal mengirim autentikasi: %v", err)
+	// Kirim pesan autentikasi hanya jika autentikasi diaktifkan
+	if c.authEnabled {
+		// Kirim pesan langsung tanpa memanggil sendMessage (untuk menghindari deadlock)
+		if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
+			c.logger.Error("Gagal mengirim pesan autentikasi: %v", err)
+			c.Close()
+			return fmt.Errorf("gagal mengirim autentikasi: %v", err)
+		}
 	}
 
 	// Mulai goroutine untuk membaca pesan
@@ -255,6 +297,9 @@ func (c *Client) readPump() {
 
 // SendRegisterTunnel mengirim permintaan pendaftaran tunnel
 func (c *Client) SendRegisterTunnel(config model.TunnelConfig) (*model.RegisterResponsePayload, error) {
+	// Simpan subdomain yang ditentukan oleh pengguna
+	c.subdomain = config.Subdomain
+
 	// Buat channel untuk menerima respons
 	responseCh := make(chan *model.RegisterResponsePayload, 1)
 	errCh := make(chan error, 1)
@@ -343,6 +388,13 @@ func (c *Client) SendData(tunnelID string, connectionID string, data []byte) err
 	}
 
 	return c.sendMessage(msg)
+}
+
+// GetSubdomain mengembalikan subdomain yang ditentukan oleh pengguna
+func (c *Client) GetSubdomain() string {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.subdomain
 }
 
 // Ensure Client implements port.Client

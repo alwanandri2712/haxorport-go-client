@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/haxorport/haxor-client/internal/domain/model"
 )
@@ -21,11 +22,9 @@ func (c *Client) HandleHTTPRequestMessage(msg *model.Message) error {
 	c.logger.Info("Menerima permintaan HTTP: %s %s", request.Method, request.URL)
 
 	// Buat permintaan HTTP ke layanan lokal di komputer klien
-	// Gunakan skema yang diterima dari server (http atau https)
+	// Selalu gunakan HTTP untuk koneksi lokal, terlepas dari skema yang diterima dari server
+	// Ini karena layanan lokal biasanya hanya mendukung HTTP
 	scheme := "http"
-	if request.Scheme != "" {
-		scheme = request.Scheme
-	}
 	
 	// Gunakan localhost di komputer klien, bukan di server
 	targetURL := fmt.Sprintf("%s://localhost:%d%s", scheme, request.LocalPort, request.URL)
@@ -64,6 +63,63 @@ func (c *Client) HandleHTTPRequestMessage(msg *model.Message) error {
 	if err != nil {
 		c.logger.Error("Gagal membaca body respons: %v", err)
 		return c.sendHTTPErrorResponse(request.ID, err)
+	}
+
+	// Periksa Content-Type untuk menentukan apakah ini adalah HTML
+	contentType := resp.Header.Get("Content-Type")
+	if strings.Contains(contentType, "text/html") {
+		// Ganti URL lokal dengan URL tunnel dalam respons HTML
+		localURLPrefix := fmt.Sprintf("http://localhost:%d", request.LocalPort)
+		localURLPrefixSecure := fmt.Sprintf("https://localhost:%d", request.LocalPort)
+		
+		// Buat URL tunnel berdasarkan skema yang diterima
+		tunnelScheme := "http"
+		if request.Scheme == "https" {
+			tunnelScheme = "https"
+		}
+		
+		// Ekstrak hostname yang tepat dari header Host
+		hostname := ""
+		if host, ok := request.Headers["Host"]; ok && len(host) > 0 {
+			hostname = host[0]
+		}
+		
+		// Jika hostname masih kosong, gunakan X-Forwarded-Host
+		if hostname == "" {
+			if host, ok := request.Headers["X-Forwarded-Host"]; ok && len(host) > 0 {
+				hostname = host[0]
+			}
+		}
+		
+		// Jika hostname masih kosong, ekstrak subdomain dari URL tunnel
+		if hostname == "" {
+			// Coba dapatkan subdomain dari URL yang diberikan oleh pengguna
+			subdomain := c.GetSubdomain()
+			if subdomain != "" {
+				hostname = subdomain + ".haxorport.online"
+			} else {
+				// Fallback ke tunnel ID jika subdomain tidak tersedia
+				hostname = request.TunnelID + ".haxorport.online"
+			}
+		}
+		
+		c.logger.Info(fmt.Sprintf("Menggunakan hostname: %s untuk penggantian URL", hostname))
+		tunnelURLPrefix := fmt.Sprintf("%s://%s", tunnelScheme, hostname)
+		
+		// Ganti URL dalam body
+		bodyStr := string(body)
+		bodyStr = strings.ReplaceAll(bodyStr, localURLPrefix, tunnelURLPrefix)
+		bodyStr = strings.ReplaceAll(bodyStr, localURLPrefixSecure, tunnelURLPrefix)
+		
+		// Ganti URL relatif dalam href dan src
+		// Contoh: href="/path" menjadi href="https://subdomain.haxorport.online/path"
+		bodyStr = strings.ReplaceAll(bodyStr, "href=\"/", "href=\""+tunnelURLPrefix+"/")
+		bodyStr = strings.ReplaceAll(bodyStr, "src=\"/", "src=\""+tunnelURLPrefix+"/")
+		
+		// Update body dengan konten yang telah dimodifikasi
+		body = []byte(bodyStr)
+		
+		c.logger.Info("URL lokal dalam respons HTML diganti dengan URL tunnel")
 	}
 
 	// Buat respons HTTP

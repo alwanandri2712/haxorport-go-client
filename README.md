@@ -103,34 +103,28 @@ haxor http --port 8080 --subdomain myapp --auth header --header "X-API-Key" --va
 
 ### Tunnel HTTPS
 
-Haxorport sekarang mendukung tunnel HTTPS secara otomatis. Ketika klien terhubung ke server, server akan mendeteksi apakah permintaan datang melalui HTTP atau HTTPS dan meneruskan informasi ini ke klien. Klien kemudian akan menggunakan skema yang sesuai saat membuat permintaan ke layanan lokal.
+Haxorport sekarang mendukung tunnel HTTPS secara otomatis dengan arsitektur reverse connection. Ketika klien terhubung ke server, server akan mendeteksi apakah permintaan datang melalui HTTP atau HTTPS dan meneruskan permintaan tersebut ke klien melalui koneksi WebSocket. Klien kemudian akan membuat permintaan ke layanan lokal dan mengirim respons kembali ke server.
+
+Keunggulan arsitektur reverse connection:
+
+1. **Tidak memerlukan SSH tunnel**: Anda tidak perlu mengatur SSH tunnel untuk mengakses layanan lokal
+2. **Penggantian URL otomatis**: URL lokal dalam respons HTML akan otomatis diganti dengan URL tunnel
+3. **Dukungan HTTPS**: Akses layanan lokal melalui HTTPS tanpa perlu mengonfigurasi TLS di layanan lokal
+4. **Subdomain kustom**: Gunakan subdomain yang mudah diingat untuk mengakses layanan lokal
 
 Untuk menggunakan tunnel HTTPS:
 
 1. Pastikan server haxorport dikonfigurasi dengan benar untuk mendukung HTTPS
-2. Jalankan klien seperti biasa:
+2. Jalankan klien dengan menentukan port lokal dan subdomain:
    ```
-   haxorport http http://localhost:9090 -c config.yaml
+   haxor-client http --port 8080 --subdomain myapp
    ```
 3. Akses layanan Anda melalui HTTPS:
    ```
-   https://your-subdomain.haxorport.online
+   https://myapp.haxorport.online
    ```
 
-### Solusi Sementara dengan SSH Tunnel
-
-Jika Anda mengalami masalah koneksi dengan tunnel HTTPS, Anda dapat menggunakan SSH tunnel sebagai solusi sementara:
-
-```bash
-ssh -R <remote_port>:localhost:<local_port> -i <path_to_key> -N -f user@server
-```
-
-Contoh:
-```bash
-ssh -R 9090:localhost:9090 -i /path/to/key.pem -N -f root@example.com
-```
-
-Ini akan meneruskan permintaan yang diterima di port 9090 di server ke port 9090 di komputer lokal Anda.
+Semua link dan referensi dalam halaman web Anda akan otomatis diubah untuk menggunakan URL tunnel, sehingga navigasi di situs web berfungsi dengan benar.
 
 ### Tunnel TCP
 

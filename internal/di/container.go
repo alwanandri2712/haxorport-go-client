@@ -58,33 +58,28 @@ func (c *Container) Initialize(configPath string) error {
 	// Setel level logger berdasarkan konfigurasi
 	c.Logger.SetLevel(string(c.Config.LogLevel))
 
-	// Jika file log ditentukan, gunakan file logger
+	// Jika file log ditentukan, gunakan file logger tetapi tetap tampilkan output ke terminal
 	if c.Config.LogFile != "" {
-		fileLogger, err := logger.NewFileLogger(c.Config.LogFile, string(c.Config.LogLevel))
+		_, err := logger.NewFileLogger(c.Config.LogFile, string(c.Config.LogLevel))
 		if err != nil {
 			c.Logger.Error("Gagal membuat file logger: %v", err)
 		} else {
-			// Tutup logger lama jika ada
-			if c.Logger != nil {
-				c.Logger.Close()
-			}
-			c.Logger = fileLogger
+			// Tetap gunakan logger yang ada (ke stdout)
+			c.Logger.Info("Log juga akan ditulis ke file: %s", c.Config.LogFile)
 		}
 	}
 
 	// Inisialisasi client
-	c.Client = transport.NewClient(
-		c.Config.ServerAddress,
-		c.Config.ControlPort,
-		c.Config.AuthToken,
-		c.Logger,
-	)
+	c.Client = transport.NewClient(c.Config, c.Logger)
 
 	// Inisialisasi tunnel repository
 	c.TunnelRepository = transport.NewTunnelRepository(c.Client, c.Logger)
 
 	// Inisialisasi tunnel service
 	c.TunnelService = service.NewTunnelService(c.TunnelRepository, c.Logger)
+
+	// Daftarkan handler untuk pesan HTTP request
+	c.Client.RegisterHandler(model.MessageTypeHTTPRequest, c.Client.HandleHTTPRequestMessage)
 
 	return nil
 }
