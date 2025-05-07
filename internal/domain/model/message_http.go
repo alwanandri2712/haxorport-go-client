@@ -1,9 +1,6 @@
 package model
 
-import (
-	"encoding/json"
-	"net/http"
-)
+// Tidak ada impor yang diperlukan
 
 // MessageTypeHTTPRequest adalah tipe pesan untuk permintaan HTTP
 const MessageTypeHTTPRequest MessageType = "http_request"

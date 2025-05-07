@@ -1,0 +1,6 @@
+# Konfigurasi Haxorport Client untuk Development
+server_address: localhost
+control_port: 9080
+auth_token: ""  # Token autentikasi jika diperlukan
+log_level: debug  # Gunakan debug untuk melihat lebih banyak informasi
+log_file: "logs/haxor-client.log"    # Kosong untuk output ke stdout

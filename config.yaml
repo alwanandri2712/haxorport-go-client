@@ -1,6 +1,20 @@
 # Konfigurasi Haxorport Client
-server_address: control.haxorport.online
-control_port: 443
+server_address: localhost
+control_port: 9080
+data_port: 9081
+
+# Konfigurasi autentikasi
+auth_enabled: false
 auth_token: ""  # Token autentikasi jika diperlukan
+
+# Konfigurasi TLS
+tls_enabled: false
+tls_cert: ""
+tls_key: ""
+
+# Domain dasar untuk subdomain tunnel
+base_domain: "haxorport.online"
+
+# Konfigurasi logging
 log_level: debug  # Gunakan debug untuk melihat lebih banyak informasi
 log_file: ""    # Kosong untuk output ke stdout

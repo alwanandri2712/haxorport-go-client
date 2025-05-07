@@ -72,7 +72,11 @@ func (r *TunnelRepository) Register(config model.TunnelConfig) (*model.Tunnel, e
 	r.mutex.Unlock()
 
 	// Mulai listener untuk tunnel tanpa menampilkan statistik
-	go r.startTunnelListener(tunnel)
+	// Hanya mulai listener jika tipe tunnel adalah TCP
+	// Untuk HTTP, kita tidak perlu listener karena server HTTP sudah berjalan
+	if config.Type == model.TunnelTypeTCP {
+		go r.startTunnelListener(tunnel)
+	}
 
 	return tunnel, nil
 }

@@ -6,8 +6,20 @@ server_address: "localhost"
 # Port untuk control plane
 control_port: 8080
 
-# Token autentikasi
+# Port untuk data plane
+data_port: 8081
+
+# Konfigurasi autentikasi
+auth_enabled: true
 auth_token: "your-auth-token"
+
+# Konfigurasi TLS
+tls_enabled: false
+tls_cert: ""
+tls_key: ""
+
+# Domain dasar untuk subdomain tunnel
+base_domain: "haxorport.online"
 
 # Level logging (debug, info, warn, error)
 log_level: "info"

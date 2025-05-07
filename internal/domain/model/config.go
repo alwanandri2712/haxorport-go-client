@@ -20,12 +20,24 @@ type Config struct {
 	ServerAddress string
 	// ControlPort adalah port untuk control plane
 	ControlPort int
+	// DataPort adalah port untuk data plane
+	DataPort int
+	// AuthEnabled adalah flag untuk mengaktifkan autentikasi
+	AuthEnabled bool
 	// AuthToken adalah token untuk autentikasi ke server
 	AuthToken string
+	// TLSEnabled adalah flag untuk mengaktifkan TLS
+	TLSEnabled bool
+	// TLSCert adalah path ke file sertifikat TLS
+	TLSCert string
+	// TLSKey adalah path ke file kunci TLS
+	TLSKey string
 	// LogLevel adalah level logging (debug, info, warn, error)
 	LogLevel LogLevel
 	// LogFile adalah path ke file log (kosong untuk stdout)
 	LogFile string
+	// BaseDomain adalah domain dasar untuk subdomain tunnel
+	BaseDomain string
 	// Tunnels adalah daftar tunnel yang akan dibuat saat startup
 	Tunnels []TunnelConfig
 }
@@ -35,8 +47,15 @@ func NewConfig() *Config {
 	return &Config{
 		ServerAddress: "control.haxorport.online",
 		ControlPort:   443,
+		DataPort:      8081,
+		AuthEnabled:   false,
+		AuthToken:     "",
+		TLSEnabled:    false,
+		TLSCert:       "",
+		TLSKey:        "",
 		LogLevel:      LogLevelInfo,
 		LogFile:       "",
+		BaseDomain:    "haxorport.online",
 		Tunnels:       []TunnelConfig{},
 	}
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -69,9 +70,9 @@ Contoh:
 
 			// Generate subdomain otomatis jika tidak ditentukan
 			if httpSubdomain == "" {
-				// Gunakan timestamp untuk membuat subdomain unik
+				// Gunakan timestamp untuk membuat subdomain unik tanpa awalan "haxor-"
 				timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-				httpSubdomain = fmt.Sprintf("haxor-%x", timestamp%0xFFFFFF)
+				httpSubdomain = fmt.Sprintf("%x", timestamp%0xFFFFFF)
 			}
 		}
 
@@ -126,14 +127,42 @@ Contoh:
 			os.Exit(1)
 		}
 
-		fmt.Printf("Tunnel HTTP berhasil dibuat!\n")
-		fmt.Printf("URL: %s\n", tunnel.URL)
-		fmt.Printf("Port Lokal: %d\n", tunnel.Config.LocalPort)
-		if auth != nil {
-			fmt.Printf("Autentikasi: %s\n", auth.Type)
+		// Tulis ke file log untuk debugging
+		logFile, err := os.OpenFile("output.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err == nil {
+			defer logFile.Close()
+			fmt.Fprintf(logFile, "Tunnel berhasil dibuat: %s\n", tunnel.URL)
 		}
 
-		// Tampilkan informasi tunnel tanpa statistik
+		// Gunakan fmt.Fprintf dengan os.Stderr untuk memastikan output ditampilkan
+		fmt.Fprintf(os.Stderr, "\n=================================================\n")
+		fmt.Fprintf(os.Stderr, "✅ TUNNEL BERHASIL DIBUAT!\n")
+		fmt.Fprintf(os.Stderr, "=================================================\n")
+		fmt.Fprintf(os.Stderr, "🌐 URL Tunnel: %s\n", tunnel.URL)
+		fmt.Fprintf(os.Stderr, "🔌 Port Lokal: %d\n", tunnel.Config.LocalPort)
+		fmt.Fprintf(os.Stderr, "🆔 Tunnel ID: %s\n", tunnel.ID)
+
+		// Tampilkan informasi tambahan
+		if auth != nil {
+			fmt.Fprintf(os.Stderr, "🔒 Autentikasi: %s\n", auth.Type)
+		}
+		fmt.Fprintf(os.Stderr, "🖥️  Server: %s:%d\n", Container.Config.ServerAddress, Container.Config.ControlPort)
+		fmt.Fprintf(os.Stderr, "📝 Log File: %s\n", Container.Config.LogFile)
+
+		// Tambahkan instruksi untuk mengakses URL
+		fmt.Fprintf(os.Stderr, "\n📌 Untuk mengakses layanan Anda, buka URL di atas di browser\n")
+		fmt.Fprintf(os.Stderr, "   atau gunakan curl:\n")
+		fmt.Fprintf(os.Stderr, "   curl %s\n", tunnel.URL)
+
+		fmt.Fprintf(os.Stderr, "=================================================\n")
+		fmt.Fprintf(os.Stderr, "📋 Tekan Ctrl+C untuk menghentikan tunnel\n")
+		fmt.Fprintf(os.Stderr, "=================================================\n")
+
+		// Flush stderr untuk memastikan output ditampilkan
+		os.Stderr.Sync()
+
+		// Gunakan log.Printf untuk menampilkan output
+		log.Printf("Tunnel berhasil dibuat: %s", tunnel.URL)
 
 		// Tunggu sinyal untuk keluar
 		sigCh := make(chan os.Signal, 1)
@@ -161,6 +190,6 @@ func init() {
 	httpCmd.Flags().StringVar(&httpHeader, "header", "", "Nama header untuk autentikasi header")
 	httpCmd.Flags().StringVar(&httpValue, "value", "", "Nilai header untuk autentikasi header")
 
-	// Tandai flag yang diperlukan
-	httpCmd.MarkFlagRequired("port")
+	// Port hanya wajib jika URL tidak diberikan
+	// httpCmd.MarkFlagRequired("port")
 }

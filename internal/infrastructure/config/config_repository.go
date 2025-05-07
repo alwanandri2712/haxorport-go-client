@@ -46,7 +46,13 @@ func (r *ConfigRepository) Load(configPath string) (*model.Config, error) {
 	// Mapping dari viper ke struct Config
 	config.ServerAddress = viper.GetString("server_address")
 	config.ControlPort = viper.GetInt("control_port")
+	config.DataPort = viper.GetInt("data_port")
+	config.AuthEnabled = viper.GetBool("auth_enabled")
 	config.AuthToken = viper.GetString("auth_token")
+	config.TLSEnabled = viper.GetBool("tls_enabled")
+	config.TLSCert = viper.GetString("tls_cert")
+	config.TLSKey = viper.GetString("tls_key")
+	config.BaseDomain = viper.GetString("base_domain")
 	config.LogLevel = model.LogLevel(viper.GetString("log_level"))
 	config.LogFile = viper.GetString("log_file")
 
@@ -83,7 +89,13 @@ func (r *ConfigRepository) Save(config *model.Config, configPath string) error {
 	// Set nilai konfigurasi di viper
 	viper.Set("server_address", config.ServerAddress)
 	viper.Set("control_port", config.ControlPort)
+	viper.Set("data_port", config.DataPort)
+	viper.Set("auth_enabled", config.AuthEnabled)
 	viper.Set("auth_token", config.AuthToken)
+	viper.Set("tls_enabled", config.TLSEnabled)
+	viper.Set("tls_cert", config.TLSCert)
+	viper.Set("tls_key", config.TLSKey)
+	viper.Set("base_domain", config.BaseDomain)
 	viper.Set("log_level", string(config.LogLevel))
 	viper.Set("log_file", config.LogFile)
 	viper.Set("tunnels", config.Tunnels)
