@@ -93,10 +93,27 @@ Setelah instalasi, Anda dapat langsung menggunakan perintah `haxorport`.
 
 Sebelum menggunakan Haxor Client, Anda perlu mengatur konfigurasi:
 
+#### Mendapatkan Auth Token
+
+Untuk mendapatkan auth-token, Anda harus mendaftar terlebih dahulu di:
+
+**[https://haxorport.online/Register](https://haxorport.online/Register)**
+
+Setelah mendaftar dan login, Anda dapat menemukan auth-token di dashboard akun Anda.
+
+#### Mengatur Konfigurasi
+
 ```
-haxor config set server_address haxorport.com
-haxor config set control_port 8080
+haxor config set server_address control.haxorport.online
+haxor config set control_port 443
 haxor config set auth_token your-auth-token
+haxor config set tls_enabled true
+```
+
+Atau gunakan cara yang lebih mudah dengan perintah:
+
+```
+./build.sh config
 ```
 
 Untuk melihat konfigurasi saat ini:
