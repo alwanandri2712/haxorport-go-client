@@ -152,6 +152,8 @@ Semua link dan referensi dalam halaman web Anda akan otomatis diubah untuk mengg
 
 ### Tunnel TCP
 
+Haxorport mendukung tunnel TCP yang memungkinkan Anda mengekspos layanan TCP lokal (seperti SSH, database, atau layanan lainnya) ke internet. Tunnel TCP bekerja dengan cara meneruskan koneksi dari port remote di server Haxorport ke port lokal di mesin Anda.
+
 Membuat tunnel TCP untuk layanan TCP lokal:
 
 ```
@@ -159,6 +161,33 @@ haxor tcp --port 22 --remote-port 2222
 ```
 
 Jika `--remote-port` tidak ditentukan, server akan menetapkan port remote secara otomatis.
+
+Keunggulan tunnel TCP Haxorport:
+
+1. **Akses Aman**: Akses layanan TCP lokal dari mana saja tanpa perlu membuka port di firewall
+2. **Dukungan Berbagai Protokol**: Mendukung semua protokol berbasis TCP (SSH, MySQL, PostgreSQL, Redis, dll.)
+3. **Autentikasi Terintegrasi**: Menggunakan sistem autentikasi yang sama dengan tunnel HTTP/HTTPS
+4. **Batas Penggunaan**: Kontrol jumlah tunnel berdasarkan langganan pengguna
+
+Contoh penggunaan tunnel TCP:
+
+- **SSH Server**:
+  ```
+  haxor tcp --port 22 --remote-port 2222
+  # Akses: ssh user@haxorport.online -p 2222
+  ```
+
+- **Database MySQL**:
+  ```
+  haxor tcp --port 3306 --remote-port 3306
+  # Akses: mysql -h haxorport.online -P 3306 -u user -p
+  ```
+
+- **Database PostgreSQL**:
+  ```
+  haxor tcp --port 5432 --remote-port 5432
+  # Akses: psql -h haxorport.online -p 5432 -U user -d database
+  ```
 
 ### Menambahkan Tunnel ke Konfigurasi
 
