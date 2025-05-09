@@ -1,79 +1,79 @@
-# Haxor Client
+# 🚀 Haxor Client
 
-Haxor Client adalah aplikasi klien untuk layanan Haxorport, yang memungkinkan Anda membuat tunnel HTTP dan TCP untuk mengekspos layanan lokal ke internet.
+Haxor Client is a client application for the Haxorport service, allowing you to create HTTP and TCP tunnels to expose local services to the internet.
 
-## Fitur
+## ✨ Features
 
-- Tunnel HTTP/HTTPS: Ekspos layanan web lokal dengan subdomain kustom, mendukung protokol HTTP dan HTTPS
-- Tunnel TCP: Ekspos layanan TCP lokal dengan port remote
-- Autentikasi: Lindungi tunnel dengan autentikasi basic atau header
-- Konfigurasi: Kelola konfigurasi dengan mudah melalui CLI
-- Reconnect otomatis: Koneksi akan otomatis terhubung kembali jika terputus
+- 🌐 **HTTP/HTTPS Tunnels**: Expose local web services with custom subdomains, supporting both HTTP and HTTPS protocols
+- 🔌 **TCP Tunnels**: Expose local TCP services with remote ports
+- 🔒 **Authentication**: Protect tunnels with basic or header authentication
+- ⚙️ **Configuration**: Easily manage configuration through CLI
+- 🔄 **Automatic Reconnection**: Connections will automatically reconnect if disconnected
 
-## Arsitektur
+## 🏗️ Architecture
 
-Haxor Client dibangun dengan arsitektur heksagonal (ports and adapters) yang memisahkan domain bisnis dari infrastruktur teknis. Arsitektur ini memungkinkan:
+Haxor Client is built with a hexagonal architecture (ports and adapters) that separates business domain from technical infrastructure. This architecture enables:
 
-1. **Pemisahan Concern**: Domain bisnis terpisah dari detail teknis
-2. **Testability**: Komponen dapat diuji secara terpisah
-3. **Fleksibilitas**: Implementasi infrastruktur dapat diganti tanpa mengubah domain bisnis
+1. **Separation of Concerns**: Business domain is separated from technical details
+2. **Testability**: Components can be tested separately
+3. **Flexibility**: Infrastructure implementations can be replaced without changing the business domain
 
-Struktur proyek:
+Project structure:
 
 ```
 haxor-client/
 ├── cmd/                    # Command-line interface
-├── internal/               # Kode internal
+├── internal/               # Internal code
 │   ├── domain/             # Domain layer
-│   │   ├── model/          # Model domain
-│   │   └── port/           # Port (interface)
+│   │   ├── model/          # Domain models
+│   │   └── port/           # Ports (interfaces)
 │   ├── application/        # Application layer
-│   │   └── service/        # Service
+│   │   └── service/        # Services
 │   ├── infrastructure/     # Infrastructure layer
-│   │   ├── config/         # Implementasi konfigurasi
-│   │   ├── transport/      # Implementasi komunikasi
-│   │   └── logger/         # Implementasi logger
+│   │   ├── config/         # Configuration implementation
+│   │   ├── transport/      # Communication implementation
+│   │   └── logger/         # Logger implementation
 │   └── di/                 # Dependency injection
-├── scripts/                # Script untuk build dan run
+├── scripts/                # Build and run scripts
 └── main.go                 # Entry point
 ```
 
-## Instalasi
+## 💻 Installation
 
-### Instalasi Mudah (Semua OS)
+### 🚀 Easy Installation (All OS)
 
-Gunakan script installer otomatis yang mendukung Linux, macOS, dan Windows (via WSL):
+Use the automated installer script that supports Linux, macOS, and Windows (via WSL):
 
 ```bash
-# Download dan jalankan installer
+# Download and run the installer
 curl -sSL https://raw.githubusercontent.com/alwanandri2712/haxorport-go-client/main/install.sh | bash
 ```
 
-Script installer akan:
-- Mendeteksi OS Anda secara otomatis
-- Menginstal dependensi yang diperlukan
-- Mengkompilasi dan menginstal haxorport
-- Membuat konfigurasi default
+The installer script will:
+- 🔎 Automatically detect your OS
+- 📚 Install required dependencies
+- 💿 Compile and install haxorport
+- 📝 Create default configuration
 
-Setelah instalasi, Anda dapat langsung menggunakan perintah `haxorport`.
+After installation, you can immediately use the `haxorport` command.
 
-### Instalasi Manual
+### 🔧 Manual Installation
 
-#### Dari Source
+#### 📂 From Source
 
-1. Clone repositori:
+1. Clone the repository:
    ```bash
    git clone https://github.com/alwanandri2712/haxorport-go-client.git
    cd haxorport-go-client
    ```
 
-2. Build aplikasi:
+2. Build the application:
    ```bash
-   # Pastikan Go sudah terinstal
+   # Make sure Go is installed
    go build -o bin/haxor main.go
    ```
 
-3. (Opsional) Pindahkan binary ke direktori dalam PATH:
+3. (Optional) Move the binary to a directory in your PATH:
    ```bash
    # Linux/macOS
    sudo cp bin/haxor /usr/local/bin/
@@ -82,26 +82,26 @@ Setelah instalasi, Anda dapat langsung menggunakan perintah `haxorport`.
    Copy-Item .\bin\haxor.exe -Destination "$env:ProgramFiles\haxorport\"
    ```
 
-#### Dari Binary
+#### 💾 From Binary
 
-1. Download binary terbaru dari [releases](https://github.com/alwanandri2712/haxorport-go-client/releases)
-2. Ekstrak dan pindahkan ke direktori dalam PATH
+1. Download the latest binary from [releases](https://github.com/alwanandri2712/haxorport-go-client/releases)
+2. Extract and move it to a directory in your PATH
 
-## Penggunaan
+## 💬 Usage
 
-### Konfigurasi
+### ⚙️ Configuration
 
-Sebelum menggunakan Haxor Client, Anda perlu mengatur konfigurasi:
+Before using Haxor Client, you need to set up the configuration:
 
-#### Mendapatkan Auth Token
+#### 🔑 Getting an Auth Token
 
-Untuk mendapatkan auth-token, Anda harus mendaftar terlebih dahulu di:
+To obtain an auth-token, you must first register at:
 
 **[https://haxorport.online/Register](https://haxorport.online/Register)**
 
-Setelah mendaftar dan login, Anda dapat menemukan auth-token di dashboard akun Anda.
+After registering and logging in, you can find your auth-token in your account dashboard.
 
-#### Mengatur Konfigurasi
+#### 📝 Setting Up Configuration
 
 ```
 haxor config set server_address control.haxorport.online
@@ -110,172 +110,172 @@ haxor config set auth_token your-auth-token
 haxor config set tls_enabled true
 ```
 
-Atau gunakan cara yang lebih mudah dengan perintah:
+Or use the easier method with the command:
 
 ```
 ./build.sh config
 ```
 
-Untuk melihat konfigurasi saat ini:
+To view the current configuration:
 
 ```
 haxor config show
 ```
 
-### Tunnel HTTP
+### 🌐 HTTP Tunnel
 
-Membuat tunnel HTTP untuk layanan web lokal:
+Create an HTTP tunnel for a local web service:
 
 ```
 haxor http --port 8080 --subdomain myapp
 ```
 
-Dengan autentikasi basic:
+With basic authentication:
 
 ```
 haxor http --port 8080 --subdomain myapp --auth basic --username user --password pass
 ```
 
-Dengan autentikasi header:
+With header authentication:
 
 ```
 haxor http --port 8080 --subdomain myapp --auth header --header "X-API-Key" --value "secret-key"
 ```
 
-### Tunnel HTTPS
+### 🔒 HTTPS Tunnel
 
-Haxorport sekarang mendukung tunnel HTTPS secara otomatis dengan arsitektur reverse connection. Ketika klien terhubung ke server, server akan mendeteksi apakah permintaan datang melalui HTTP atau HTTPS dan meneruskan permintaan tersebut ke klien melalui koneksi WebSocket. Klien kemudian akan membuat permintaan ke layanan lokal dan mengirim respons kembali ke server.
+Haxorport now supports HTTPS tunnels automatically with a reverse connection architecture. When the client connects to the server, the server detects whether the request comes via HTTP or HTTPS and forwards the request to the client through a WebSocket connection. The client then makes a request to the local service and sends the response back to the server.
 
-Keunggulan arsitektur reverse connection:
+Advantages of the reverse connection architecture:
 
-1. **Tidak memerlukan SSH tunnel**: Anda tidak perlu mengatur SSH tunnel untuk mengakses layanan lokal
-2. **Penggantian URL otomatis**: URL lokal dalam respons HTML akan otomatis diganti dengan URL tunnel
-3. **Dukungan HTTPS**: Akses layanan lokal melalui HTTPS tanpa perlu mengonfigurasi TLS di layanan lokal
-4. **Subdomain kustom**: Gunakan subdomain yang mudah diingat untuk mengakses layanan lokal
+1. **No SSH tunnel required**: You don't need to set up an SSH tunnel to access local services
+2. **Automatic URL replacement**: Local URLs in HTML responses are automatically replaced with tunnel URLs
+3. **HTTPS support**: Access local services via HTTPS without configuring TLS on the local service
+4. **Custom subdomains**: Use easy-to-remember subdomains to access local services
 
-Untuk menggunakan tunnel HTTPS:
+To use an HTTPS tunnel:
 
-1. Pastikan server haxorport dikonfigurasi dengan benar untuk mendukung HTTPS
-2. Jalankan klien dengan menentukan port lokal dan subdomain:
+1. Ensure the haxorport server is correctly configured to support HTTPS
+2. Run the client by specifying the local port and subdomain:
    ```
-   haxor-client http --port 8080 --subdomain myapp
+   haxor http --port 8080 --subdomain myapp
    ```
-3. Akses layanan Anda melalui HTTPS:
+3. Access your service via HTTPS:
    ```
    https://myapp.haxorport.online
    ```
 
-Semua link dan referensi dalam halaman web Anda akan otomatis diubah untuk menggunakan URL tunnel, sehingga navigasi di situs web berfungsi dengan benar.
+All links and references in your web pages will be automatically modified to use the tunnel URL, ensuring that navigation on the website works correctly.
 
-### Tunnel TCP
+### 🔌 TCP Tunnel
 
-Haxorport mendukung tunnel TCP yang memungkinkan Anda mengekspos layanan TCP lokal (seperti SSH, database, atau layanan lainnya) ke internet. Tunnel TCP bekerja dengan cara meneruskan koneksi dari port remote di server Haxorport ke port lokal di mesin Anda.
+Haxorport supports TCP tunnels that allow you to expose local TCP services (such as SSH, databases, or other services) to the internet. TCP tunnels work by forwarding connections from a remote port on the Haxorport server to a local port on your machine.
 
-Membuat tunnel TCP untuk layanan TCP lokal:
+Create a TCP tunnel for a local TCP service:
 
 ```
 haxor tcp --port 22 --remote-port 2222
 ```
 
-Jika `--remote-port` tidak ditentukan, server akan menetapkan port remote secara otomatis.
+If `--remote-port` is not specified, the server will assign a remote port automatically.
 
-Keunggulan tunnel TCP Haxorport:
+Advantages of Haxorport TCP tunnels:
 
-1. **Akses Aman**: Akses layanan TCP lokal dari mana saja tanpa perlu membuka port di firewall
-2. **Dukungan Berbagai Protokol**: Mendukung semua protokol berbasis TCP (SSH, MySQL, PostgreSQL, Redis, dll.)
-3. **Autentikasi Terintegrasi**: Menggunakan sistem autentikasi yang sama dengan tunnel HTTP/HTTPS
-4. **Batas Penggunaan**: Kontrol jumlah tunnel berdasarkan langganan pengguna
+1. **Secure Access**: Access local TCP services from anywhere without opening ports in your firewall
+2. **Multi-Protocol Support**: Supports all TCP-based protocols (SSH, MySQL, PostgreSQL, Redis, etc.)
+3. **Integrated Authentication**: Uses the same authentication system as HTTP/HTTPS tunnels
+4. **Usage Limits**: Control the number of tunnels based on user subscription
 
-Contoh penggunaan tunnel TCP:
+Examples of TCP tunnel usage:
 
-- **SSH Server**:
+- **🔑 SSH Server**:
   ```
   haxor tcp --port 22 --remote-port 2222
-  # Akses: ssh user@haxorport.online -p 2222
+  # Access: ssh user@haxorport.online -p 2222
   ```
 
-- **Database MySQL**:
+- **💾 MySQL Database**:
   ```
   haxor tcp --port 3306 --remote-port 3306
-  # Akses: mysql -h haxorport.online -P 3306 -u user -p
+  # Access: mysql -h haxorport.online -P 3306 -u user -p
   ```
 
-- **Database PostgreSQL**:
+- **💾 PostgreSQL Database**:
   ```
   haxor tcp --port 5432 --remote-port 5432
-  # Akses: psql -h haxorport.online -p 5432 -U user -d database
+  # Access: psql -h haxorport.online -p 5432 -U user -d database
   ```
 
-### Menambahkan Tunnel ke Konfigurasi
+### 📝 Adding Tunnels to Configuration
 
-Anda dapat menambahkan tunnel ke konfigurasi untuk digunakan nanti:
+You can add tunnels to the configuration for later use:
 
 ```
 haxor config add-tunnel --name web --type http --port 8080 --subdomain myapp
 haxor config add-tunnel --name ssh --type tcp --port 22 --remote-port 2222
 ```
 
-## Pengembangan
+## 👨‍💻 Development
 
-### Prasyarat
+### 📚 Prerequisites
 
-- Go 1.21 atau lebih baru
+- Go 1.21 or newer
 - Git
 
-### Setup Pengembangan
+### 🔧 Development Setup
 
-1. Clone repositori:
+1. Clone the repository:
    ```
    git clone https://github.com/alwanandri2712/haxorport-go-client.git
-   cd haxor-client
+   cd haxorport-go-client
    ```
 
-2. Install dependensi:
+2. Install dependencies:
    ```
    go mod download
    ```
 
-3. Jalankan aplikasi dalam mode pengembangan:
+3. Run the application in development mode:
    ```
    ./scripts/run.sh
    ```
 
-### Struktur Kode
+### 💻 Code Structure
 
-- **Domain Layer**: Berisi model domain dan port (interface)
-- **Application Layer**: Berisi service yang mengimplementasikan use case
-- **Infrastructure Layer**: Berisi implementasi konkret dari port
-- **CLI Layer**: Berisi command-line interface menggunakan Cobra
-- **DI Layer**: Berisi container untuk dependency injection
+- **Domain Layer**: Contains domain models and ports (interfaces)
+- **Application Layer**: Contains services that implement use cases
+- **Infrastructure Layer**: Contains concrete implementations of ports
+- **CLI Layer**: Contains command-line interface using Cobra
+- **DI Layer**: Contains container for dependency injection
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Mengurangi Output Debug
+### 📉 Reducing Debug Output
 
-Jika Anda melihat terlalu banyak pesan log INFO saat menjalankan aplikasi, Anda dapat mengubah level log menjadi `warn` dengan cara berikut:
+If you see too many INFO log messages when running the application, you can change the log level to `warn` as follows:
 
 ```bash
-# Edit file konfigurasi
-sudo nano /etc/haxorport/config.yaml  # Untuk Linux
-nano ~/.haxorport/config/config.yaml  # Untuk Windows (WSL)
-nano ~/Library/Preferences/haxorport/config.yaml  # Untuk macOS
+# Edit configuration file
+sudo nano /etc/haxorport/config.yaml  # For Linux
+nano ~/.haxorport/config/config.yaml  # For Windows (WSL)
+nano ~/Library/Preferences/haxorport/config.yaml  # For macOS
 ```
 
-Ubah baris `log_level: info` menjadi `log_level: warn`, lalu simpan file.
+Change the line `log_level: info` to `log_level: warn`, then save the file.
 
-Atau gunakan perintah berikut untuk mengubah level log secara otomatis:
+Or use the following command to change the log level automatically:
 
 ```bash
-# Untuk Linux
+# For Linux
 sudo sed -i 's/log_level:.*/log_level: warn/g' /etc/haxorport/config.yaml
 
-# Untuk macOS
+# For macOS
 sed -i '' 's/log_level:.*/log_level: warn/g' ~/Library/Preferences/haxorport/config.yaml
 
-# Untuk Windows (WSL)
+# For Windows (WSL)
 sed -i 's/log_level:.*/log_level: warn/g' ~/.haxorport/config/config.yaml
 ```
 
-## Lisensi
+## 📃 License
 
 MIT License
