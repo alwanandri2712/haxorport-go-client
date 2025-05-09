@@ -279,11 +279,15 @@ install_application() {
     if [[ "$OSTYPE" == "darwin"* ]] || grep -q Microsoft /proc/version 2>/dev/null; then
         # Untuk macOS dan WSL, gunakan path relatif ke home
         sed -i.bak "s|log_file:.*|log_file: \"$LOG_DIR/haxor-client.log\"|g" "$CONFIG_DIR/config.yaml"
+        sed -i.bak "s|log_level:.*|log_level: warn|g" "$CONFIG_DIR/config.yaml"
         rm -f "$CONFIG_DIR/config.yaml.bak" 2>/dev/null
     else
         # Untuk Linux
         sed -i "s|log_file:.*|log_file: \"$LOG_DIR/haxor-client.log\"|g" "$CONFIG_DIR/config.yaml"
+        sed -i "s|log_level:.*|log_level: warn|g" "$CONFIG_DIR/config.yaml"
     fi
+    
+    print_info "Level log diatur ke 'warn' untuk mengurangi output debug"
     
     # Buat script wrapper untuk haxorport
     cat > haxorport << EOF

@@ -231,6 +231,34 @@ haxor config add-tunnel --name ssh --type tcp --port 22 --remote-port 2222
 - **CLI Layer**: Berisi command-line interface menggunakan Cobra
 - **DI Layer**: Berisi container untuk dependency injection
 
+## Troubleshooting
+
+### Mengurangi Output Debug
+
+Jika Anda melihat terlalu banyak pesan log INFO saat menjalankan aplikasi, Anda dapat mengubah level log menjadi `warn` dengan cara berikut:
+
+```bash
+# Edit file konfigurasi
+sudo nano /etc/haxorport/config.yaml  # Untuk Linux
+nano ~/.haxorport/config/config.yaml  # Untuk Windows (WSL)
+nano ~/Library/Preferences/haxorport/config.yaml  # Untuk macOS
+```
+
+Ubah baris `log_level: info` menjadi `log_level: warn`, lalu simpan file.
+
+Atau gunakan perintah berikut untuk mengubah level log secara otomatis:
+
+```bash
+# Untuk Linux
+sudo sed -i 's/log_level:.*/log_level: warn/g' /etc/haxorport/config.yaml
+
+# Untuk macOS
+sed -i '' 's/log_level:.*/log_level: warn/g' ~/Library/Preferences/haxorport/config.yaml
+
+# Untuk Windows (WSL)
+sed -i 's/log_level:.*/log_level: warn/g' ~/.haxorport/config/config.yaml
+```
+
 ## Lisensi
 
 MIT License
