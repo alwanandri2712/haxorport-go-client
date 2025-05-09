@@ -55,7 +55,7 @@ detect_platform() {
             ;;
     esac
     
-    # Deteksi arsitektur
+    # Detect architecture
     case "$(uname -m)" in
         x86_64|amd64)  ARCH="amd64" ;;
         arm64|aarch64) ARCH="arm64" ;;
@@ -63,76 +63,76 @@ detect_platform() {
     esac
     
     CONFIG_FILE="$CONFIG_DIR/config.yaml"
-    print_info "Terdeteksi platform: $OS/$ARCH"
+    print_info "Detected platform: $OS/$ARCH"
 }
 
-# Cek apakah Go terinstall
+# Check if Go is installed
 check_go() {
     if ! command -v go &> /dev/null; then
-        print_error "Go tidak terinstall. Silakan install Go terlebih dahulu: https://golang.org/doc/install"
+        print_error "Go is not installed. Please install Go first: https://golang.org/doc/install"
     fi
     
     GO_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
     print_info "Go version: $GO_VERSION"
 }
 
-# Bersihkan direktori bin
+# Clean bin directory
 clean_bin_dir() {
-    print_info "Membersihkan direktori bin..."
+    print_info "Cleaning bin directory..."
     mkdir -p bin
 }
 
-# Build aplikasi
+# Build application
 build_app() {
-    print_info "Mengunduh dependensi..."
-    go mod download || print_error "Gagal mengunduh dependensi"
+    print_info "Downloading dependencies..."
+    go mod download || print_error "Failed to download dependencies"
     
-    print_info "Building aplikasi..."
+    print_info "Building application..."
     if [ "$OS" = "windows" ]; then
-        go build -o bin/haxor.exe main.go || print_error "Build gagal"
+        go build -o bin/haxor.exe main.go || print_error "Build failed"
     else
-        go build -o bin/haxor main.go || print_error "Build gagal"
+        go build -o bin/haxor main.go || print_error "Build failed"
     fi
     
-    # Beri izin eksekusi pada binary (untuk Linux dan macOS)
+    # Give execution permission to binary (for Linux and macOS)
     if [ "$OS" != "windows" ]; then
         chmod +x bin/haxor
     fi
     
-    print_success "Build berhasil!"
+    print_success "Build successful!"
 }
 
-# Build untuk semua platform
+# Build for all platforms
 build_all_platforms() {
-    print_info "Building untuk semua platform..."
+    print_info "Building for all platforms..."
     
     # Linux (amd64)
-    print_info "Building untuk linux/amd64..."
-    GOOS=linux GOARCH=amd64 go build -o "bin/haxor-linux-amd64" main.go || print_info "⚠️ Build untuk linux/amd64 gagal"
+    print_info "Building for linux/amd64..."
+    GOOS=linux GOARCH=amd64 go build -o "bin/haxor-linux-amd64" main.go || print_info "⚠️ Build for linux/amd64 failed"
     
     # Linux (arm64)
-    print_info "Building untuk linux/arm64..."
-    GOOS=linux GOARCH=arm64 go build -o "bin/haxor-linux-arm64" main.go || print_info "⚠️ Build untuk linux/arm64 gagal"
+    print_info "Building for linux/arm64..."
+    GOOS=linux GOARCH=arm64 go build -o "bin/haxor-linux-arm64" main.go || print_info "⚠️ Build for linux/arm64 failed"
     
     # macOS (amd64)
-    print_info "Building untuk darwin/amd64..."
-    GOOS=darwin GOARCH=amd64 go build -o "bin/haxor-darwin-amd64" main.go || print_info "⚠️ Build untuk darwin/amd64 gagal"
+    print_info "Building for darwin/amd64..."
+    GOOS=darwin GOARCH=amd64 go build -o "bin/haxor-darwin-amd64" main.go || print_info "⚠️ Build for darwin/amd64 failed"
     
     # macOS (arm64)
-    print_info "Building untuk darwin/arm64..."
-    GOOS=darwin GOARCH=arm64 go build -o "bin/haxor-darwin-arm64" main.go || print_info "⚠️ Build untuk darwin/arm64 gagal"
+    print_info "Building for darwin/arm64..."
+    GOOS=darwin GOARCH=arm64 go build -o "bin/haxor-darwin-arm64" main.go || print_info "⚠️ Build for darwin/arm64 failed"
     
     # Windows (amd64)
-    print_info "Building untuk windows/amd64..."
-    GOOS=windows GOARCH=amd64 go build -o "bin/haxor-windows-amd64.exe" main.go || print_info "⚠️ Build untuk windows/amd64 gagal"
+    print_info "Building for windows/amd64..."
+    GOOS=windows GOARCH=amd64 go build -o "bin/haxor-windows-amd64.exe" main.go || print_info "⚠️ Build for windows/amd64 failed"
     
-    print_success "Build multi-platform selesai!"
+    print_success "Multi-platform build completed!"
 }
 
-# Jalankan aplikasi setelah build (opsional)
+# Run application after build (optional)
 run_app() {
     if [ "$1" = "--run" ]; then
-        print_info "Menjalankan aplikasi..."
+        print_info "Running application..."
         if [ "$OS" = "windows" ]; then
             ./bin/haxor.exe "${@:2}"
         else
@@ -141,32 +141,32 @@ run_app() {
     fi
 }
 
-# Periksa koneksi internet
+# Check internet connection
 check_internet() {
-    print_info "Memeriksa koneksi internet..."
+    print_info "Checking internet connection..."
     if ping -c 1 control.haxorport.online &> /dev/null; then
-        print_success "Koneksi internet OK"
+        print_success "Internet connection OK"
         return 0
     else
-        print_info "Tidak dapat menjangkau control.haxorport.online, mencoba dengan IP..."
+        print_info "Cannot reach control.haxorport.online, trying with IP..."
         if ping -c 1 8.8.8.8 &> /dev/null; then
-            print_info "Koneksi internet OK, tetapi DNS mungkin bermasalah"
+            print_info "Internet connection OK, but DNS may be problematic"
             return 0
         else
-            print_error "Tidak ada koneksi internet. Periksa koneksi jaringan Anda."
+            print_error "No internet connection. Please check your network connection."
             return 1
         fi
     fi
 }
 
-# Periksa firewall
+# Check firewall
 check_firewall() {
-    print_info "Memeriksa akses ke port 443..."
+    print_info "Checking access to port 443..."
     if nc -z -w 5 control.haxorport.online 443 &> /dev/null; then
-        print_success "Port 443 dapat diakses"
+        print_success "Port 443 is accessible"
         return 0
     else
-        print_info "Port 443 tidak dapat diakses. Firewall mungkin memblokir koneksi."
+        print_info "Port 443 is not accessible. Firewall may be blocking the connection."
         return 1
     fi
 }
@@ -317,10 +317,10 @@ show_help() {
 # Main script
 echo -e "${GREEN}=== Haxorport Client Tool ===${NC}"
 
-# Inisialisasi
+# Initialization
 detect_platform
 
-# Parse argumen
+# Parse arguments
 COMMAND="build"
 BUILD_ALL=false
 RUN_ARGS=""
@@ -340,7 +340,7 @@ while [[ $# -gt 0 ]]; do
                 RUN_ARGS="${@:2}"
                 break
             else
-                print_error "--run memerlukan argumen tambahan"
+                print_error "--run requires additional arguments"
             fi
             ;;
         build|config|test|fix)
@@ -348,12 +348,12 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            print_error "Opsi tidak dikenal: $1. Gunakan --help untuk bantuan."
+            print_error "Unknown option: $1. Use --help for assistance."
             ;;
     esac
 done
 
-# Eksekusi perintah
+# Execute command
 case $COMMAND in
     build)
         check_go
