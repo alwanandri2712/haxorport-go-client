@@ -16,5 +16,5 @@ tls_key: ""
 base_domain: "haxorport.online"
 
 # Konfigurasi logging
-log_level: debug  # Gunakan debug untuk melihat lebih banyak informasi
+log_level: warn  # Gunakan warn untuk mengurangi output debug
 log_file: ""    # Kosong untuk output ke stdout
