@@ -34,18 +34,24 @@ fi
 
 CONFIG_FILE="$CONFIG_DIR/config.yaml"
 
-# Check if config file exists
-if [ ! -f "$CONFIG_FILE" ]; then
-    print_error "Configuration file not found at $CONFIG_FILE"
-    exit 1
+# Create config directory if it doesn't exist
+if [ ! -d "$CONFIG_DIR" ]; then
+    print_info "Configuration directory not found. Creating directory: $CONFIG_DIR"
+    mkdir -p "$CONFIG_DIR"
 fi
 
-print_info "Found configuration file at $CONFIG_FILE"
+# Check if config file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    print_info "Configuration file not found. Will create a new one at $CONFIG_FILE"
+else
+    print_info "Found existing configuration file at $CONFIG_FILE"
+    # Backup the current config
+    print_info "Creating backup of current configuration..."
+    cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+    print_success "Backup created at ${CONFIG_FILE}.bak"
+fi
 
-# Backup the current config
-print_info "Creating backup of current configuration..."
-cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
-print_success "Backup created at ${CONFIG_FILE}.bak"
+# Continue with configuration update
 
 # Fix configuration
 print_info "Updating configuration to fix websocket handshake issue..."
