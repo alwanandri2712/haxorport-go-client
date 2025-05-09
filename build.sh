@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Script all-in-one untuk Haxorport Client
-# Mendukung Linux, macOS, dan Windows (via WSL/Git Bash)
+# All-in-one script for Haxorport Client
+# Supports Linux, macOS, and Windows (via WSL/Git Bash)
 # Author: Haxorport Team
 
-# Warna untuk output
+# Colors for output formatting
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Fungsi untuk menampilkan pesan dengan warna
+# Functions for displaying colored messages
 print_info() {
     echo -e "${YELLOW}[INFO]${NC} $1"
 }
