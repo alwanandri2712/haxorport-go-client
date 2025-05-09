@@ -370,12 +370,29 @@ case $COMMAND in
         echo -e "${GREEN}==================================================${NC}"
         echo -e "Lokasi binary: $(pwd)/bin/"
         echo -e ""
-        echo -e "Untuk menjalankan:"
+        
+        # Periksa apakah haxor sudah terinstall secara global
+        if command -v haxor &> /dev/null; then
+            echo -e "Haxor sudah terinstall secara global. Anda dapat menggunakan:"
+            if [ "$OS" = "windows" ]; then
+                echo -e "  haxor.exe --help"
+            else
+                echo -e "  haxor --help"
+            fi
+            echo -e ""
+            echo -e "Atau gunakan binary yang baru di-build:"
+        fi
+        
+        echo -e "Untuk menjalankan binary yang baru di-build:"
         if [ "$OS" = "windows" ]; then
             echo -e "  ./bin/haxor.exe --help"
         else
             echo -e "  ./bin/haxor --help"
         fi
+        echo -e ""
+        echo -e "Contoh penggunaan:"
+        echo -e "  haxor http --port 80"
+        echo -e "  haxor tcp --local-port 22 --remote-port 2222"
         echo -e "${GREEN}==================================================${NC}"
         
         # Jalankan aplikasi jika RUN_ARGS tidak kosong
