@@ -180,32 +180,54 @@ install_dependencies() {
     print_success "Semua dependensi berhasil diinstal."
 }
 
-# Fungsi untuk mengkloning repositori
-clone_repository() {
-    print_info "Memeriksa repositori..."
+# Fungsi untuk menyiapkan repositori
+setup_repository() {
+    print_info "Menyiapkan repositori..."
     
-    # Jika direktori sudah ada, update saja
-    if [ -d "haxorport-go-client" ]; then
-        print_info "Repositori sudah ada. Memperbarui..."
-        cd haxorport-go-client
-        git fetch --all
+    # Periksa apakah script dijalankan dari dalam repositori
+    CURRENT_DIR=$(basename "$PWD")
+    if [ "$CURRENT_DIR" = "haxorport-go-client" ]; then
+        print_info "Script dijalankan dari dalam repositori. Menggunakan repositori saat ini."
         
-        # Checkout ke branch yang ditentukan
-        print_info "Checkout ke branch $REPO_BRANCH..."
-        git checkout $REPO_BRANCH
-        git pull origin $REPO_BRANCH
-        
-        cd ..
-    else
-        print_info "Mengkloning repositori..."
-        # Clone langsung dari branch yang ditentukan
-        git clone -b $REPO_BRANCH $REPO_URL
-        
-        if [ ! -d "haxorport-go-client" ]; then
-            print_error "Gagal mengkloning repositori."
-            exit 1
+        # Pastikan kita berada di branch yang benar
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$CURRENT_BRANCH" != "$REPO_BRANCH" ]; then
+            print_info "Checkout ke branch $REPO_BRANCH..."
+            git checkout $REPO_BRANCH
+            git pull origin $REPO_BRANCH
         else
-            print_success "Repositori berhasil dikloning."
+            print_info "Sudah berada di branch $REPO_BRANCH. Memperbarui..."
+            git pull origin $REPO_BRANCH
+        fi
+        
+        # Gunakan direktori saat ini
+        REPO_DIR="$PWD"
+    else
+        # Jika direktori repositori sudah ada di direktori saat ini, gunakan itu
+        if [ -d "haxorport-go-client" ]; then
+            print_info "Repositori sudah ada. Memperbarui..."
+            cd haxorport-go-client
+            git fetch --all
+            
+            # Checkout ke branch yang ditentukan
+            print_info "Checkout ke branch $REPO_BRANCH..."
+            git checkout $REPO_BRANCH
+            git pull origin $REPO_BRANCH
+            
+            REPO_DIR="$PWD"
+            cd ..
+        else
+            print_info "Mengkloning repositori..."
+            # Clone langsung dari branch yang ditentukan
+            git clone -b $REPO_BRANCH $REPO_URL
+            
+            if [ ! -d "haxorport-go-client" ]; then
+                print_error "Gagal mengkloning repositori."
+                exit 1
+            else
+                print_success "Repositori berhasil dikloning."
+                REPO_DIR="$PWD/haxorport-go-client"
+            fi
         fi
     fi
 }
@@ -214,7 +236,8 @@ clone_repository() {
 build_application() {
     print_info "Mengkompilasi aplikasi..."
     
-    cd haxorport-go-client
+    # Masuk ke direktori repositori
+    cd "$REPO_DIR"
     
     # Buat direktori bin jika belum ada
     mkdir -p bin
@@ -239,7 +262,7 @@ build_application() {
 install_application() {
     print_info "Menginstal aplikasi..."
     
-    cd haxorport-go-client
+    cd "$REPO_DIR"
     
     # Buat direktori instalasi
     mkdir -p "$INSTALL_DIR"
@@ -296,7 +319,7 @@ update_application() {
     print_info "Memperbarui aplikasi..."
     
     # Update repositori
-    clone_repository
+    setup_repository
     
     # Build ulang aplikasi
     build_application
@@ -349,7 +372,7 @@ fi
 
 # Jalankan fungsi-fungsi instalasi
 install_dependencies
-clone_repository
+setup_repository
 build_application
 install_application
 show_usage
