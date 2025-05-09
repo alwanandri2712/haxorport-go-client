@@ -67,6 +67,14 @@ fix_config() {
     cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
     print_info "Backup konfigurasi lama disimpan di $CONFIG_FILE.bak"
     
+    # Minta token dari pengguna
+    print_info "Silakan masukkan token autentikasi Anda dari dashboard Haxorport:"
+    read -p "Token: " USER_TOKEN
+    
+    if [ -z "$USER_TOKEN" ]; then
+        print_error "Token tidak boleh kosong. Silakan jalankan script ini lagi dan masukkan token yang valid."
+    fi
+    
     # Perbarui konfigurasi
     cat > "$CONFIG_FILE" << EOF
 # Konfigurasi Haxorport Client
@@ -76,7 +84,7 @@ data_port: 0
 
 # Konfigurasi autentikasi
 auth_enabled: true
-auth_token: mFZzPMtTyzZfmF28TWqm_atuaTPwF2WWeExA9CfNS
+auth_token: $USER_TOKEN
 auth_validation_url: https://haxorport.online/AuthToken/validate
 
 # Konfigurasi TLS
