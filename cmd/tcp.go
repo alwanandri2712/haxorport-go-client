@@ -37,6 +37,25 @@ Contoh:
 				os.Exit(1)
 			}
 		}
+		
+		// Periksa validasi token jika auth diaktifkan
+		if Container.Config.AuthEnabled {
+			// Periksa apakah data pengguna tersedia (berarti token sudah divalidasi)
+			userData := Container.Client.GetUserData()
+			if userData == nil {
+				fmt.Println("Error: Token autentikasi tidak valid atau belum divalidasi")
+				os.Exit(1)
+			}
+			
+			// Periksa batas tunnel
+			reached, used, limit := Container.Client.CheckTunnelLimit()
+			if reached {
+				fmt.Printf("Error: Batas tunnel tercapai (%d/%d). Upgrade langganan Anda.\n", used, limit)
+				os.Exit(1)
+			}
+			
+			// Informasi pengguna sudah ditampilkan di log
+		}
 
 		// Jalankan client dengan reconnect otomatis
 		Container.Client.RunWithReconnect()

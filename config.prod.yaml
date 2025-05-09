@@ -1,7 +1,13 @@
-# Konfigurasi Haxorport Client untuk Production
-server_address: control.haxorport.online
+auth_enabled: true
+auth_token: mFZzPMtTyzZfmF28TWqm_atuaTPwF2WWeExA9CfNS
+auth_validation_url: https://haxorport.online/AuthToken/validate
+base_domain: ""
 control_port: 443
-tls_enabled: true  # Gunakan TLS (WSS) untuk koneksi WebSocket
-auth_token: ""  # Token autentikasi jika diperlukan
-log_level: info  # Gunakan info untuk output yang lebih bersih
-log_file: "logs/haxor-client.log"    # Kosong untuk output ke stdout
+data_port: 0
+log_file: logs/haxor-client.log
+log_level: info
+server_address: control.haxorport.online
+tls_cert: ""
+tls_enabled: true
+tls_key: ""
+tunnels: []

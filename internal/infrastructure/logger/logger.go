@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/haxorport/haxor-client/internal/domain/port"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/port"
 )
 
 // Level mendefinisikan level logging

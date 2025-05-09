@@ -3,11 +3,11 @@ package di
 import (
 	"os"
 
-	"github.com/haxorport/haxor-client/internal/application/service"
-	"github.com/haxorport/haxor-client/internal/domain/model"
-	"github.com/haxorport/haxor-client/internal/infrastructure/config"
-	"github.com/haxorport/haxor-client/internal/infrastructure/logger"
-	"github.com/haxorport/haxor-client/internal/infrastructure/transport"
+	"github.com/alwanandri2712/haxorport-go-client/internal/application/service"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/infrastructure/config"
+	"github.com/alwanandri2712/haxorport-go-client/internal/infrastructure/logger"
+	"github.com/alwanandri2712/haxorport-go-client/internal/infrastructure/transport"
 )
 
 // Container adalah container untuk dependency injection

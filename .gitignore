@@ -45,6 +45,10 @@ temp/
 # Build directory
 build/
 dist/
+bin/
+# Binary output
+haxor
+haxorport
 
 # Environment variables
 .env

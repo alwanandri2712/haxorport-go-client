@@ -1,6 +1,6 @@
 package port
 
-import "github.com/haxorport/haxor-client/internal/domain/model"
+import "github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
 
 // ConfigRepository adalah interface untuk mengakses dan memanipulasi konfigurasi
 type ConfigRepository interface {

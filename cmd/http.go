@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/haxorport/haxor-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
 	"github.com/spf13/cobra"
 )
 
@@ -116,6 +116,23 @@ Contoh:
 				os.Exit(1)
 			}
 		}
+		
+		// Periksa validasi token jika auth diaktifkan
+		if Container.Config.AuthEnabled {
+			// Periksa apakah data pengguna tersedia (berarti token sudah divalidasi)
+			userData := Container.Client.GetUserData()
+			if userData == nil {
+				fmt.Println("Error: Token autentikasi tidak valid atau belum divalidasi")
+				os.Exit(1)
+			}
+			
+			// Periksa batas tunnel
+			reached, used, limit := Container.Client.CheckTunnelLimit()
+			if reached {
+				fmt.Printf("Error: Batas tunnel tercapai (%d/%d). Upgrade langganan Anda.\n", used, limit)
+				os.Exit(1)
+			}
+		}
 
 		// Jalankan client dengan reconnect otomatis
 		Container.Client.RunWithReconnect()
@@ -146,7 +163,7 @@ Contoh:
 		if auth != nil {
 			fmt.Fprintf(os.Stderr, "🔒 Autentikasi: %s\n", auth.Type)
 		}
-		fmt.Fprintf(os.Stderr, "🖥️  Server: %s:%d\n", Container.Config.ServerAddress, Container.Config.ControlPort)
+		// Informasi server tidak ditampilkan
 		fmt.Fprintf(os.Stderr, "📝 Log File: %s\n", Container.Config.LogFile)
 
 		// Tambahkan instruksi untuk mengakses URL

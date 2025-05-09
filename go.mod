@@ -1,4 +1,4 @@
-module github.com/haxorport/haxor-client
+module github.com/alwanandri2712/haxorport-go-client
 
 go 1.18
 

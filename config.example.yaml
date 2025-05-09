@@ -12,6 +12,7 @@ data_port: 8081
 # Konfigurasi autentikasi
 auth_enabled: true
 auth_token: "your-auth-token"
+auth_validation_url: "https://haxorport.online/AuthToken/validate"
 
 # Konfigurasi TLS
 tls_enabled: false

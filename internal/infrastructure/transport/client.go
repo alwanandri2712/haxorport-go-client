@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/haxorport/haxor-client/internal/domain/model"
-	"github.com/haxorport/haxor-client/internal/domain/port"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/port"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/service"
 )
 
 // Client adalah implementasi port.Client
@@ -31,6 +32,8 @@ type Client struct {
 	logger       port.Logger
 	handlers     map[model.MessageType]func(*model.Message) error
 	subdomain    string // Subdomain yang ditentukan oleh pengguna
+	config       *model.Config
+	userData     *model.AuthData // Data pengguna dari validasi token
 }
 
 // NewClient membuat instance Client baru dari konfigurasi
@@ -49,6 +52,7 @@ func NewClient(config *model.Config, logger port.Logger) *Client {
 		reconnecting: false,
 		logger:       logger,
 		handlers:     make(map[model.MessageType]func(*model.Message) error),
+		config:       config,
 	}
 }
 
@@ -59,6 +63,46 @@ func (c *Client) Connect() error {
 
 	if c.isConnected {
 		return nil
+	}
+
+	// Validasi token jika auth diaktifkan
+	if c.config.AuthEnabled && c.config.AuthToken != "" {
+		c.logger.Info("Memvalidasi token autentikasi...")
+
+		// Gunakan URL validasi dari konfigurasi jika tersedia
+		validationURL := c.config.AuthValidationURL
+		if validationURL == "" {
+			// Buat URL validasi default berdasarkan server address
+			validationURL = fmt.Sprintf("http://%s/AuthToken/validate", c.config.ServerAddress)
+			if c.config.TLSEnabled {
+				validationURL = fmt.Sprintf("https://%s/AuthToken/validate", c.config.ServerAddress)
+			}
+		}
+		c.logger.Info("Menggunakan URL validasi: %s", validationURL)
+
+		// Buat auth service
+		authService := service.NewAuthService(validationURL)
+
+		// Validasi token dan dapatkan respons lengkap
+		response, err := authService.ValidateTokenWithResponse(c.config.AuthToken)
+		if err != nil {
+			c.logger.Error("Gagal memvalidasi token: %v", err)
+			return fmt.Errorf("gagal memvalidasi token: %v", err)
+		}
+
+		// Periksa apakah token valid
+		if response.Status != "success" || response.Code != 200 {
+			c.logger.Error("Token tidak valid: %s", response.Message)
+			return fmt.Errorf("token tidak valid: %s", response.Message)
+		}
+
+		// Simpan data pengguna
+		c.userData = &response.Data
+		c.logger.Info("Token berhasil divalidasi untuk pengguna: %s (%s)", c.userData.Fullname, c.userData.Email)
+		c.logger.Info("Langganan: %s, Batas Tunnel: %d/%d", 
+			c.userData.Subscription.Name, 
+			c.userData.Subscription.Limits.Tunnels.Used, 
+			c.userData.Subscription.Limits.Tunnels.Limit)
 	}
 
 	// Gunakan protokol yang sesuai berdasarkan konfigurasi TLS
@@ -392,9 +436,33 @@ func (c *Client) SendData(tunnelID string, connectionID string, data []byte) err
 
 // GetSubdomain mengembalikan subdomain yang ditentukan oleh pengguna
 func (c *Client) GetSubdomain() string {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
 	return c.subdomain
+}
+
+// SetSubdomain menetapkan subdomain yang ditentukan oleh pengguna
+func (c *Client) SetSubdomain(subdomain string) {
+	c.subdomain = subdomain
+}
+
+// GetUserData mengembalikan data pengguna dari validasi token
+func (c *Client) GetUserData() *model.AuthData {
+	return c.userData
+}
+
+// CheckTunnelLimit memeriksa apakah pengguna sudah mencapai batas tunnel
+func (c *Client) CheckTunnelLimit() (bool, int, int) {
+	// Jika tidak ada data pengguna, anggap tidak ada batasan
+	if c.userData == nil {
+		return false, 0, 0
+	}
+	
+	// Ambil informasi batas tunnel
+	limits := c.userData.Subscription.Limits.Tunnels
+	
+	// Periksa apakah sudah mencapai batas
+	reached := limits.Reached || limits.Used >= limits.Limit
+	
+	return reached, limits.Used, limits.Limit
 }
 
 // Ensure Client implements port.Client

@@ -26,6 +26,8 @@ type Config struct {
 	AuthEnabled bool
 	// AuthToken adalah token untuk autentikasi ke server
 	AuthToken string
+	// AuthValidationURL adalah URL untuk validasi token (kosong untuk menggunakan default)
+	AuthValidationURL string
 	// TLSEnabled adalah flag untuk mengaktifkan TLS
 	TLSEnabled bool
 	// TLSCert adalah path ke file sertifikat TLS
@@ -45,18 +47,19 @@ type Config struct {
 // NewConfig membuat instance Config baru dengan nilai default
 func NewConfig() *Config {
 	return &Config{
-		ServerAddress: "control.haxorport.online",
-		ControlPort:   443,
-		DataPort:      8081,
-		AuthEnabled:   false,
-		AuthToken:     "",
-		TLSEnabled:    false,
-		TLSCert:       "",
-		TLSKey:        "",
-		LogLevel:      LogLevelInfo,
-		LogFile:       "",
-		BaseDomain:    "haxorport.online",
-		Tunnels:       []TunnelConfig{},
+		ServerAddress:     "control.haxorport.online",
+		ControlPort:       443,
+		DataPort:          8081,
+		AuthEnabled:       false,
+		AuthToken:         "",
+		AuthValidationURL: "https://haxorport.online/AuthToken/validate",
+		TLSEnabled:        false,
+		TLSCert:           "",
+		TLSKey:            "",
+		LogLevel:          LogLevelWarn,
+		LogFile:           "",
+		BaseDomain:        "haxorport.online",
+		Tunnels:           []TunnelConfig{},
 	}
 }
 

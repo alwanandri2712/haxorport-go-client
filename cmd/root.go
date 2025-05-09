@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/haxorport/haxor-client/internal/di"
+	"github.com/alwanandri2712/haxorport-go-client/internal/di"
 	"github.com/spf13/cobra"
 )
 

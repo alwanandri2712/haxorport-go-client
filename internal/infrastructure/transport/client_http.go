@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/haxorport/haxor-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
 )
 
 // HandleHTTPRequestMessage menangani pesan permintaan HTTP dari server

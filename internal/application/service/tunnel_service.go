@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/haxorport/haxor-client/internal/domain/model"
-	"github.com/haxorport/haxor-client/internal/domain/port"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/port"
 )
 
 // TunnelService adalah service untuk mengelola tunnel

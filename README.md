@@ -40,27 +40,51 @@ haxor-client/
 
 ## Instalasi
 
-### Dari Source
+### Instalasi Mudah (Semua OS)
+
+Gunakan script installer otomatis yang mendukung Linux, macOS, dan Windows (via WSL):
+
+```bash
+# Download dan jalankan installer
+curl -sSL https://raw.githubusercontent.com/alwanandri2712/haxorport-go-client/main/install.sh | bash
+```
+
+Script installer akan:
+- Mendeteksi OS Anda secara otomatis
+- Menginstal dependensi yang diperlukan
+- Mengkompilasi dan menginstal haxorport
+- Membuat konfigurasi default
+
+Setelah instalasi, Anda dapat langsung menggunakan perintah `haxorport`.
+
+### Instalasi Manual
+
+#### Dari Source
 
 1. Clone repositori:
-   ```
-   git clone https://github.com/haxorport/haxor-client.git
-   cd haxor-client
+   ```bash
+   git clone https://github.com/alwanandri2712/haxorport-go-client.git
+   cd haxorport-go-client
    ```
 
 2. Build aplikasi:
-   ```
-   ./scripts/build.sh
+   ```bash
+   # Pastikan Go sudah terinstal
+   go build -o bin/haxor main.go
    ```
 
 3. (Opsional) Pindahkan binary ke direktori dalam PATH:
-   ```
+   ```bash
+   # Linux/macOS
    sudo cp bin/haxor /usr/local/bin/
+   
+   # Windows (PowerShell Admin)
+   Copy-Item .\bin\haxor.exe -Destination "$env:ProgramFiles\haxorport\"
    ```
 
-### Dari Binary
+#### Dari Binary
 
-1. Download binary terbaru dari [releases](https://github.com/haxorport/haxor-client/releases)
+1. Download binary terbaru dari [releases](https://github.com/alwanandri2712/haxorport-go-client/releases)
 2. Ekstrak dan pindahkan ke direktori dalam PATH
 
 ## Penggunaan
@@ -156,7 +180,7 @@ haxor config add-tunnel --name ssh --type tcp --port 22 --remote-port 2222
 
 1. Clone repositori:
    ```
-   git clone https://github.com/haxorport/haxor-client.git
+   git clone https://github.com/alwanandri2712/haxorport-go-client.git
    cd haxor-client
    ```
 

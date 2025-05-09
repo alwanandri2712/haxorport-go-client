@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/haxorport/haxor-client/internal/domain/model"
-	"github.com/haxorport/haxor-client/internal/domain/port"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/port"
 	"github.com/spf13/viper"
 )
 
@@ -49,6 +49,7 @@ func (r *ConfigRepository) Load(configPath string) (*model.Config, error) {
 	config.DataPort = viper.GetInt("data_port")
 	config.AuthEnabled = viper.GetBool("auth_enabled")
 	config.AuthToken = viper.GetString("auth_token")
+	config.AuthValidationURL = viper.GetString("auth_validation_url")
 	config.TLSEnabled = viper.GetBool("tls_enabled")
 	config.TLSCert = viper.GetString("tls_cert")
 	config.TLSKey = viper.GetString("tls_key")
@@ -85,13 +86,14 @@ func (r *ConfigRepository) Save(config *model.Config, configPath string) error {
 
 	// Set konfigurasi di viper
 	viper.SetConfigFile(configPath)
-	
+
 	// Set nilai konfigurasi di viper
 	viper.Set("server_address", config.ServerAddress)
 	viper.Set("control_port", config.ControlPort)
 	viper.Set("data_port", config.DataPort)
 	viper.Set("auth_enabled", config.AuthEnabled)
 	viper.Set("auth_token", config.AuthToken)
+	viper.Set("auth_validation_url", config.AuthValidationURL)
 	viper.Set("tls_enabled", config.TLSEnabled)
 	viper.Set("tls_cert", config.TLSCert)
 	viper.Set("tls_key", config.TLSKey)
