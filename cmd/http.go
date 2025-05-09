@@ -109,10 +109,46 @@ Contoh:
 			}
 		}
 
+		// Periksa konfigurasi token terlebih dahulu
+		if Container.Config.AuthEnabled {
+			if Container.Config.AuthToken == "" {
+				fmt.Println("\n===================================================")
+				fmt.Println("⚠️ ERROR: Auth token tidak ditemukan dalam konfigurasi")
+				fmt.Println("===================================================")
+				fmt.Println("Anda perlu menambahkan token autentikasi ke file konfigurasi:")
+				fmt.Printf("  %s\n\n", Container.Config.GetConfigFilePath())
+				fmt.Println("Cara menambahkan token:")
+				fmt.Println("1. Edit file konfigurasi dengan editor teks")
+				fmt.Println("2. Temukan baris 'auth_token: \"\"' dan ganti dengan token Anda")
+				fmt.Println("3. Simpan file dan jalankan kembali perintah ini")
+				fmt.Println("\nAnda bisa mendapatkan token di dashboard Haxorport:")
+				fmt.Println("  https://haxorport.online/dashboard")
+				fmt.Println("===================================================")
+				os.Exit(1)
+			}
+		}
+
 		// Pastikan client terhubung
 		if !Container.Client.IsConnected() {
 			if err := Container.Client.Connect(); err != nil {
-				fmt.Printf("Error: Gagal terhubung ke server: %v\n", err)
+				fmt.Println("\n===================================================")
+				fmt.Printf("⚠️ ERROR: Gagal terhubung ke server\n")
+				fmt.Println("===================================================")
+				fmt.Printf("Detail error: %v\n", err)
+				
+				// Berikan saran berdasarkan jenis error
+				if Container.Config.AuthEnabled {
+					fmt.Println("\nKemungkinan penyebab:")
+					fmt.Println("1. Token autentikasi tidak valid")
+					fmt.Println("2. Server tidak dapat dijangkau")
+					fmt.Println("3. Koneksi internet bermasalah")
+					fmt.Println("\nSaran:")
+					fmt.Println("- Periksa token autentikasi Anda di file konfigurasi")
+					fmt.Printf("  %s\n", Container.Config.GetConfigFilePath())
+					fmt.Println("- Pastikan Anda terhubung ke internet")
+					fmt.Println("- Coba jalankan './setup.sh' untuk memperbarui konfigurasi")
+				}
+				fmt.Println("===================================================")
 				os.Exit(1)
 			}
 		}
@@ -122,14 +158,31 @@ Contoh:
 			// Periksa apakah data pengguna tersedia (berarti token sudah divalidasi)
 			userData := Container.Client.GetUserData()
 			if userData == nil {
-				fmt.Println("Error: Token autentikasi tidak valid atau belum divalidasi")
+				fmt.Println("\n===================================================")
+				fmt.Println("⚠️ ERROR: Token autentikasi tidak valid")
+				fmt.Println("===================================================")
+				fmt.Println("Token yang Anda berikan tidak valid atau tidak dapat divalidasi.")
+				fmt.Println("\nSaran:")
+				fmt.Println("1. Periksa apakah token sudah benar di file konfigurasi:")
+				fmt.Printf("   %s\n", Container.Config.GetConfigFilePath())
+				fmt.Println("2. Pastikan Anda menggunakan token yang valid dari dashboard Haxorport")
+				fmt.Println("   https://haxorport.online/dashboard")
+				fmt.Println("===================================================")
 				os.Exit(1)
 			}
 			
 			// Periksa batas tunnel
 			reached, used, limit := Container.Client.CheckTunnelLimit()
 			if reached {
-				fmt.Printf("Error: Batas tunnel tercapai (%d/%d). Upgrade langganan Anda.\n", used, limit)
+				fmt.Println("\n===================================================")
+				fmt.Printf("⚠️ ERROR: Batas tunnel tercapai (%d/%d)\n", used, limit)
+				fmt.Println("===================================================")
+				fmt.Println("Anda telah mencapai batas tunnel untuk langganan Anda.")
+				fmt.Println("\nSaran:")
+				fmt.Println("- Tutup beberapa tunnel yang tidak digunakan")
+				fmt.Println("- Upgrade langganan Anda untuk mendapatkan lebih banyak tunnel")
+				fmt.Println("  https://haxorport.online/pricing")
+				fmt.Println("===================================================")
 				os.Exit(1)
 			}
 		}

@@ -1,5 +1,10 @@
 package model
 
+import (
+	"os"
+	"path/filepath"
+)
+
 // LogLevel mendefinisikan level logging
 type LogLevel string
 
@@ -88,4 +93,21 @@ func (c *Config) GetTunnel(name string) *TunnelConfig {
 		}
 	}
 	return nil
+}
+
+// GetConfigFilePath mengembalikan path ke file konfigurasi
+func (c *Config) GetConfigFilePath() string {
+	// Tentukan direktori konfigurasi berdasarkan user
+	configDir := "/etc/haxorport"
+	
+	// Jika bukan root, gunakan direktori home
+	if os.Getuid() != 0 {
+		homeDir, err := os.UserHomeDir()
+		if err == nil {
+			configDir = filepath.Join(homeDir, ".haxorport")
+		}
+	}
+	
+	// Path file konfigurasi
+	return filepath.Join(configDir, "config.yaml")
 }
