@@ -23,7 +23,19 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     INSTALL_DIR="$HOME/Library/Application Support/haxorport"
     CONFIG_DIR="$HOME/Library/Preferences/haxorport"
     LOG_DIR="$HOME/Library/Logs/haxorport"
-    BIN_DIR="/usr/local/bin"
+    
+    # Periksa apakah menggunakan Apple Silicon
+    if [[ $(uname -m) == "arm64" ]]; then
+        print_info "Terdeteksi Apple Silicon (M1/M2)"
+        # Gunakan /opt/homebrew/bin untuk Apple Silicon jika ada
+        if [ -d "/opt/homebrew/bin" ]; then
+            BIN_DIR="/opt/homebrew/bin"
+        else
+            BIN_DIR="/usr/local/bin"
+        fi
+    else
+        BIN_DIR="/usr/local/bin"
+    fi
 fi
 
 # Untuk Windows (WSL)
@@ -34,6 +46,18 @@ if grep -q Microsoft /proc/version 2>/dev/null; then
     BIN_DIR="$HOME/.local/bin"
     mkdir -p "$BIN_DIR"
     export PATH="$PATH:$BIN_DIR"
+    
+    # Tambahkan BIN_DIR ke PATH secara permanen jika belum ada
+    if ! grep -q "$BIN_DIR" "$HOME/.bashrc" 2>/dev/null; then
+        print_info "Menambahkan $BIN_DIR ke PATH di .bashrc"
+        echo "export PATH=\"$PATH:$BIN_DIR\"" >> "$HOME/.bashrc"
+    fi
+    
+    # Jika menggunakan zsh, tambahkan juga ke .zshrc
+    if [ -f "$HOME/.zshrc" ] && ! grep -q "$BIN_DIR" "$HOME/.zshrc" 2>/dev/null; then
+        print_info "Menambahkan $BIN_DIR ke PATH di .zshrc"
+        echo "export PATH=\"$PATH:$BIN_DIR\"" >> "$HOME/.zshrc"
+    fi
 fi
 
 # Fungsi untuk menampilkan pesan dengan warna
@@ -99,6 +123,14 @@ install_dependencies() {
             else
                 print_error "Homebrew tidak ditemukan. Silakan instal Homebrew terlebih dahulu."
                 print_info "Jalankan: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                
+                # Tambahkan instruksi khusus untuk Apple Silicon
+                if [[ $(uname -m) == "arm64" ]]; then
+                    print_info "Untuk Apple Silicon (M1/M2), setelah menginstal Homebrew, jalankan:"
+                    print_info "echo 'eval \"\$(/opt/homebrew/bin/brew shellenv)\"' >> ~/.zprofile"
+                    print_info "eval \"\$(/opt/homebrew/bin/brew shellenv)\""
+                fi
+                
                 exit 1
             fi
         else
