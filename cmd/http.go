@@ -25,29 +25,29 @@ var (
 	httpValue     string
 )
 
-// httpCmd adalah command untuk membuat HTTP tunnel
+// httpCmd is the command to create an HTTP tunnel
 var httpCmd = &cobra.Command{
 	Use:   "http [target_url]",
-	Short: "Membuat HTTP tunnel",
-	Long: `Membuat HTTP tunnel untuk mengekspos layanan HTTP lokal ke internet.
-Contoh:
+	Short: "Create an HTTP tunnel",
+	Long: `Create an HTTP tunnel to expose local HTTP services to the internet.
+Examples:
   haxor http http://localhost:8080
   haxor http --port 8080 --subdomain myapp
   haxor http --port 3000 --auth basic --username user --password pass`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Periksa apakah ada argumen URL
+		// Check if URL argument is provided
 		if len(args) > 0 {
-			// Parse URL dari argumen
+			// Parse URL from argument
 			targetURL := args[0]
 
-			// Ekstrak port dan host dari URL
+			// Extract port and host from URL
 			u, err := url.Parse(targetURL)
 			if err != nil {
 				fmt.Printf("Error: URL tidak valid: %v\n", err)
 				os.Exit(1)
 			}
 
-			// Ekstrak port dari URL
+			// Extract port from URL
 			port := u.Port()
 			if port == "" {
 				// Default port berdasarkan skema
@@ -155,7 +155,7 @@ Contoh:
 		
 		// Periksa validasi token jika auth diaktifkan
 		if Container.Config.AuthEnabled {
-			// Periksa apakah data pengguna tersedia (berarti token sudah divalidasi)
+			// Check if user data is available (means token has been validated)
 			userData := Container.Client.GetUserData()
 			if userData == nil {
 				fmt.Println("\n===================================================")

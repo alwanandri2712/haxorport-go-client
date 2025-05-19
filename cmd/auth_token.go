@@ -7,69 +7,70 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// authTokenCmd adalah command untuk mengatur token autentikasi
+// authTokenCmd is the command to set the authentication token
 var authTokenCmd = &cobra.Command{
 	Use:   "auth-token [token]",
-	Short: "Mengatur token autentikasi",
-	Long: `Mengatur token autentikasi untuk koneksi ke server.
-Contoh:
+	Short: "Set authentication token",
+	Long: `Set authentication token for server connection.
+Example:
   haxor auth-token mFZzPMtTyzZfmF28TWqm_atuaTPwF2WWeExA9CfNS`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		// Ambil token dari argumen
+		// Get token from arguments
 		token := args[0]
 
-		// Pastikan token tidak kosong
+		// Ensure token is not empty
 		if token == "" {
-			fmt.Println("Error: Token tidak boleh kosong")
+			fmt.Println("Error: Token cannot be empty")
 			os.Exit(1)
 		}
 
-		// Aktifkan autentikasi
+		// Enable authentication
 		Container.Config.AuthEnabled = true
 		Container.Config.AuthToken = token
 
-		// Simpan konfigurasi
+		// Save configuration
 		err := Container.ConfigRepository.Save(Container.Config, ConfigPath)
 		if err != nil {
-			fmt.Printf("Error: Gagal menyimpan konfigurasi: %v\n", err)
+			fmt.Printf("Error: Failed to save configuration: %v\n", err)
 			os.Exit(1)
 		}
 
-		// Validasi token
+		// Validate token
 		if err := Container.Client.Connect(); err != nil {
-			fmt.Printf("Error: Gagal memvalidasi token: %v\n", err)
+			fmt.Printf("Error: Failed to validate token: %v\n", err)
 			os.Exit(1)
 		}
 
-		// Ambil data pengguna
+		// Get user data
 		userData := Container.Client.GetUserData()
 		if userData == nil {
-			fmt.Println("Error: Gagal mendapatkan data pengguna")
+			fmt.Println("Error: Failed to get user data")
 			os.Exit(1)
 		}
 
-		// Tampilkan informasi pengguna
+		// Display user information
 		fmt.Println("\n=================================================")
-		fmt.Println("✅ TOKEN BERHASIL DIATUR DAN DIVALIDASI!")
+		fmt.Println("✅ TOKEN HAS BEEN SUCCESSFULLY SET AND VALIDATED!")
 		fmt.Println("=================================================")
-		fmt.Printf("👤 Pengguna: %s (%s)\n", userData.Fullname, userData.Email)
-		fmt.Printf("🔑 Langganan: %s\n", userData.Subscription.Name)
-		fmt.Printf("📊 Batas Tunnel: %d/%d\n", userData.Subscription.Limits.Tunnels.Used, userData.Subscription.Limits.Tunnels.Limit)
+		fmt.Printf("👤 User: %s (%s)\n", userData.Fullname, userData.Email)
+		fmt.Printf("\n=== Account Information ===\n")
+		fmt.Printf("🔑 Subscription: %s\n", userData.Subscription.Name)
+		fmt.Printf("📊 Tunnel Limit: %d/%d\n", userData.Subscription.Limits.Tunnels.Used, userData.Subscription.Limits.Tunnels.Limit)
 		
-		// Tampilkan fitur langganan
-		fmt.Println("\n📋 Fitur Langganan:")
+		// Display subscription features
+		fmt.Printf("\n=== Subscription Information ===\n")
 		if userData.Subscription.Features.CustomDomains {
-			fmt.Println("  ✓ Domain Kustom")
+			fmt.Println("  ✓ Custom Domains")
 		}
 		if userData.Subscription.Features.Analytics {
-			fmt.Println("  ✓ Analitik")
+			fmt.Println("  ✓ Analytics")
 		}
 		if userData.Subscription.Features.PrioritySupport {
-			fmt.Println("  ✓ Dukungan Prioritas")
+			fmt.Println("  ✓ Priority Support")
 		}
 		
-		fmt.Println("\n🔒 Token telah disimpan dalam konfigurasi")
+		fmt.Printf("\nAuthentication token has been successfully saved and validated.\n")
 		fmt.Println("=================================================")
 	},
 }

@@ -9,20 +9,20 @@ import (
 )
 
 var (
-	// Container adalah container untuk dependency injection
+	// Container is the dependency injection container
 	Container *di.Container
 
-	// ConfigPath adalah path ke file konfigurasi
+	// ConfigPath is the path to the configuration file
 	ConfigPath string
 
-	// RootCmd adalah command root untuk CLI
+	// RootCmd is the root command for CLI
 	RootCmd = &cobra.Command{
 		Use:   "haxor",
 		Short: "Haxorport Client - Tunneling HTTP dan TCP",
 		Long: `Haxorport Client adalah alat untuk membuat tunnel HTTP dan TCP.
 Dengan Haxorport, Anda dapat mengekspos layanan lokal ke internet.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			// Inisialisasi container
+			// Initialize container
 			Container = di.NewContainer()
 			if err := Container.Initialize(ConfigPath); err != nil {
 				fmt.Printf("Error: %v\n", err)
@@ -30,7 +30,7 @@ Dengan Haxorport, Anda dapat mengekspos layanan lokal ke internet.`,
 			}
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			// Tutup container
+			// Close container
 			if Container != nil {
 				Container.Close()
 			}
@@ -38,7 +38,7 @@ Dengan Haxorport, Anda dapat mengekspos layanan lokal ke internet.`,
 	}
 )
 
-// Execute menjalankan command root
+// Execute runs the root command
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -47,6 +47,6 @@ func Execute() {
 }
 
 func init() {
-	// Tambahkan flag global
+	// Add global flags
 	RootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path ke file konfigurasi (default: ~/.haxorport/config.yaml)")
 }

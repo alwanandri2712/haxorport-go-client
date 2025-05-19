@@ -15,39 +15,39 @@ var (
 	tcpRemotePort int
 )
 
-// tcpCmd adalah command untuk membuat TCP tunnel
+// tcpCmd is the command to create a TCP tunnel
 var tcpCmd = &cobra.Command{
 	Use:   "tcp",
-	Short: "Membuat TCP tunnel",
-	Long: `Membuat TCP tunnel untuk mengekspos layanan TCP lokal ke internet.
-Contoh:
+	Short: "Create a TCP tunnel",
+	Long: `Create a TCP tunnel to expose local TCP services to the internet.
+Examples:
   haxor tcp --port 22 --remote-port 2222
   haxor tcp --port 5432`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Validasi parameter
+		// Validate parameters
 		if tcpLocalPort <= 0 {
-			fmt.Println("Error: Port lokal harus lebih besar dari 0")
+			fmt.Println("Error: Local port must be greater than 0")
 			os.Exit(1)
 		}
 
-		// Pastikan client terhubung
+		// Ensure client is connected
 		if !Container.Client.IsConnected() {
 			if err := Container.Client.Connect(); err != nil {
-				fmt.Printf("Error: Gagal terhubung ke server: %v\n", err)
+				fmt.Printf("Error: Failed to connect to server: %v\n", err)
 				os.Exit(1)
 			}
 		}
 		
-		// Periksa validasi token jika auth diaktifkan
+		// Check token validation if auth is enabled
 		if Container.Config.AuthEnabled {
-			// Periksa apakah data pengguna tersedia (berarti token sudah divalidasi)
+			// Check if user data is available (means token has been validated)
 			userData := Container.Client.GetUserData()
 			if userData == nil {
-				fmt.Println("Error: Token autentikasi tidak valid atau belum divalidasi")
+				fmt.Println("Error: Invalid or unvalidated authentication token")
 				os.Exit(1)
 			}
 			
-			// Periksa batas tunnel
+			// Check tunnel limit
 			reached, used, limit := Container.Client.CheckTunnelLimit()
 			if reached {
 				fmt.Printf("Error: Batas tunnel tercapai (%d/%d). Upgrade langganan Anda.\n", used, limit)

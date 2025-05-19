@@ -240,6 +240,34 @@ haxor config add-tunnel --name ssh --type tcp --port 22 --remote-port 2222
    ./scripts/run.sh
    ```
 
+### 🚀 Development with Go Run
+
+For quick testing and development, you can run the application directly using `go run`:
+
+1. Make sure all dependencies are downloaded:
+   ```bash
+   go mod download
+   ```
+
+2. Run with development configuration:
+   ```bash
+   # For HTTP tunnel
+   go run main.go http http://localhost:8080 --config config.dev.yaml
+   
+   # For TCP tunnel
+   go run main.go tcp 22 --remote-port 2222 --config config.dev.yaml
+   ```
+
+3. For production configuration:
+   ```bash
+   go run main.go http http://localhost:8080 --config config.yaml
+   ```
+
+Notes:
+- Make sure your config file is properly configured before running
+- Use `--config` flag to specify configuration file
+- The application will create a default config file if not found
+
 ### 💻 Code Structure
 
 - **Domain Layer**: Contains domain models and ports (interfaces)
