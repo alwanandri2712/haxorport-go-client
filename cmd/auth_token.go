@@ -13,7 +13,7 @@ var authTokenCmd = &cobra.Command{
 	Short: "Set authentication token",
 	Long: `Set authentication token for server connection.
 Example:
-  haxor auth-token mFZzPMtTyzZfmF28TWqm_atuaTPwF2WWeExA9CfNS`,
+  haxor auth-token your_auth_token`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get token from arguments
