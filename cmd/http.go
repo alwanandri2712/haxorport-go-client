@@ -201,49 +201,49 @@ Examples:
 		logFile, err := os.OpenFile("output.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
 			defer logFile.Close()
-			fmt.Fprintf(logFile, "Tunnel berhasil dibuat: %s\n", tunnel.URL)
+			fmt.Fprintf(logFile, "Tunnel created successfully: %s\n", tunnel.URL)
 		}
 
-		// Gunakan fmt.Fprintf dengan os.Stderr untuk memastikan output ditampilkan
+		// Use fmt.Fprintf with os.Stderr to ensure output is displayed
 		fmt.Fprintf(os.Stderr, "\n=================================================\n")
-		fmt.Fprintf(os.Stderr, "✅ TUNNEL BERHASIL DIBUAT!\n")
+		fmt.Fprintf(os.Stderr, "✅ TUNNEL CREATED SUCCESSFULLY!\n")
 		fmt.Fprintf(os.Stderr, "=================================================\n")
-		fmt.Fprintf(os.Stderr, "🌐 URL Tunnel: %s\n", tunnel.URL)
-		fmt.Fprintf(os.Stderr, "🔌 Port Lokal: %d\n", tunnel.Config.LocalPort)
+		fmt.Fprintf(os.Stderr, "🌐 Tunnel URL: %s\n", tunnel.URL)
+		fmt.Fprintf(os.Stderr, "🔌 Local Port: %d\n", tunnel.Config.LocalPort)
 		fmt.Fprintf(os.Stderr, "🆔 Tunnel ID: %s\n", tunnel.ID)
 
-		// Tampilkan informasi tambahan
+		// Display additional information
 		if auth != nil {
-			fmt.Fprintf(os.Stderr, "🔒 Autentikasi: %s\n", auth.Type)
+			fmt.Fprintf(os.Stderr, "🔒 Authentication: %s\n", auth.Type)
 		}
-		// Informasi server tidak ditampilkan
+		// Server information is not displayed
 		fmt.Fprintf(os.Stderr, "📝 Log File: %s\n", Container.Config.LogFile)
 
-		// Tambahkan instruksi untuk mengakses URL
-		fmt.Fprintf(os.Stderr, "\n📌 Untuk mengakses layanan Anda, buka URL di atas di browser\n")
-		fmt.Fprintf(os.Stderr, "   atau gunakan curl:\n")
+		// Add instructions for accessing the URL
+		fmt.Fprintf(os.Stderr, "\n📌 To access your service, open the URL above in your browser\n")
+		fmt.Fprintf(os.Stderr, "   or use curl:\n")
 		fmt.Fprintf(os.Stderr, "   curl %s\n", tunnel.URL)
 
 		fmt.Fprintf(os.Stderr, "=================================================\n")
-		fmt.Fprintf(os.Stderr, "📋 Tekan Ctrl+C untuk menghentikan tunnel\n")
+		fmt.Fprintf(os.Stderr, "📋 Press Ctrl+C to stop the tunnel\n")
 		fmt.Fprintf(os.Stderr, "=================================================\n")
 
-		// Flush stderr untuk memastikan output ditampilkan
+		// Flush stderr to ensure output is displayed
 		os.Stderr.Sync()
 
-		// Gunakan log.Printf untuk menampilkan output
-		log.Printf("Tunnel berhasil dibuat: %s", tunnel.URL)
+		// Use log.Printf to display output
+		log.Printf("Tunnel created successfully: %s", tunnel.URL)
 
-		// Tunggu sinyal untuk keluar
+		// Wait for exit signal
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
 
-		// Tutup tunnel
+		// Close tunnel
 		if err := Container.TunnelService.CloseTunnel(tunnel.ID); err != nil {
-			fmt.Printf("Error: Gagal menutup tunnel: %v\n", err)
+			fmt.Printf("Error: Failed to close tunnel: %v\n", err)
 		} else {
-			fmt.Println("Tunnel ditutup")
+			fmt.Println("Tunnel closed")
 		}
 	},
 }

@@ -18,9 +18,9 @@ var (
 	// RootCmd is the root command for CLI
 	RootCmd = &cobra.Command{
 		Use:   "haxor",
-		Short: "Haxorport Client - Tunneling HTTP dan TCP",
-		Long: `Haxorport Client adalah alat untuk membuat tunnel HTTP dan TCP.
-Dengan Haxorport, Anda dapat mengekspos layanan lokal ke internet.`,
+		Short: "Haxorport Client - HTTP and TCP Tunneling",
+		Long: `Haxorport Client is a tool for creating HTTP and TCP tunnels.
+With Haxorport, you can expose local services to the internet.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Initialize container
 			Container = di.NewContainer()
@@ -48,5 +48,5 @@ func Execute() {
 
 func init() {
 	// Add global flags
-	RootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path ke file konfigurasi (default: ~/.haxorport/config.yaml)")
+	RootCmd.PersistentFlags().StringVarP(&ConfigPath, "config", "c", "", "Path to configuration file (default: ~/.haxorport/config.yaml)")
 }

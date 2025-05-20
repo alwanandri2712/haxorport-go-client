@@ -50,39 +50,39 @@ Examples:
 			// Check tunnel limit
 			reached, used, limit := Container.Client.CheckTunnelLimit()
 			if reached {
-				fmt.Printf("Error: Batas tunnel tercapai (%d/%d). Upgrade langganan Anda.\n", used, limit)
+				fmt.Printf("Error: Tunnel limit reached (%d/%d). Please upgrade your subscription.\n", used, limit)
 				os.Exit(1)
 			}
 			
-			// Informasi pengguna sudah ditampilkan di log
+			// User information is already displayed in the log
 		}
 
-		// Jalankan client dengan reconnect otomatis
+		// Run client with auto-reconnect
 		Container.Client.RunWithReconnect()
 
-		// Buat tunnel
+		// Create tunnel
 		tunnel, err := Container.TunnelService.CreateTCPTunnel(tcpLocalPort, tcpRemotePort)
 		if err != nil {
-			fmt.Printf("Error: Gagal membuat tunnel: %v\n", err)
+			fmt.Printf("Error: Failed to create tunnel: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Tunnel TCP berhasil dibuat!\n")
-		fmt.Printf("Port Remote: %d\n", tunnel.RemotePort)
-		fmt.Printf("Port Lokal: %d\n", tunnel.Config.LocalPort)
+		fmt.Printf("TCP tunnel created successfully!\n")
+		fmt.Printf("Remote Port: %d\n", tunnel.RemotePort)
+		fmt.Printf("Local Port: %d\n", tunnel.Config.LocalPort)
 
-		// Tampilkan informasi tunnel tanpa statistik
+		// Display tunnel information without statistics
 
-		// Tunggu sinyal untuk keluar
+		// Wait for exit signal
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
 
-		// Tutup tunnel
+		// Close tunnel
 		if err := Container.TunnelService.CloseTunnel(tunnel.ID); err != nil {
-			fmt.Printf("Error: Gagal menutup tunnel: %v\n", err)
+			fmt.Printf("Error: Failed to close tunnel: %v\n", err)
 		} else {
-			fmt.Println("Tunnel ditutup")
+			fmt.Println("Tunnel closed")
 		}
 	},
 }
@@ -90,10 +90,10 @@ Examples:
 func init() {
 	RootCmd.AddCommand(tcpCmd)
 
-	// Tambahkan flag
-	tcpCmd.Flags().IntVarP(&tcpLocalPort, "port", "p", 0, "Port lokal yang akan di-tunnel")
-	tcpCmd.Flags().IntVarP(&tcpRemotePort, "remote-port", "r", 0, "Port remote yang diminta (opsional)")
+	// Add flags
+	tcpCmd.Flags().IntVarP(&tcpLocalPort, "port", "p", 0, "Local port to tunnel")
+	tcpCmd.Flags().IntVarP(&tcpRemotePort, "remote-port", "r", 0, "Requested remote port (optional)")
 
-	// Tandai flag yang diperlukan
+	// Mark required flags
 	tcpCmd.MarkFlagRequired("port")
 }
