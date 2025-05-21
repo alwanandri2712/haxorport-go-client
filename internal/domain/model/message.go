@@ -6,39 +6,39 @@ import (
 	"time"
 )
 
-// MessageType mendefinisikan tipe pesan yang dikirim antara klien dan server
+// MessageType defines message types for client-server communication
 type MessageType string
 
 const (
-	// MessageTypeAuth adalah pesan untuk autentikasi
+	// MessageTypeAuth is for authentication
 	MessageTypeAuth MessageType = "auth"
-	// MessageTypeRegister adalah pesan untuk mendaftarkan tunnel
+	// MessageTypeRegister is for tunnel registration
 	MessageTypeRegister MessageType = "register"
-	// MessageTypeUnregister adalah pesan untuk menghapus tunnel
+	// MessageTypeUnregister is for tunnel removal
 	MessageTypeUnregister MessageType = "unregister"
-	// MessageTypeData adalah pesan yang berisi data tunnel
+	// MessageTypeData contains tunnel data
 	MessageTypeData MessageType = "data"
-	// MessageTypePing adalah pesan ping untuk menjaga koneksi tetap hidup
+	// MessageTypePing keeps the connection alive
 	MessageTypePing MessageType = "ping"
-	// MessageTypePong adalah respons terhadap pesan ping
+	// MessageTypePong is a response to ping
 	MessageTypePong MessageType = "pong"
-	// MessageTypeError adalah pesan error
+	// MessageTypeError indicates an error message
 	MessageTypeError MessageType = "error"
 )
 
-// Message adalah struktur dasar untuk semua pesan yang dikirim antara klien dan server
+// Message represents the base structure for all client-server messages
 type Message struct {
-	// Type adalah tipe pesan
+	// Type is the message type
 	Type MessageType `json:"type"`
-	// Version adalah versi protokol
+	// Version is the protocol version
 	Version string `json:"version"`
-	// Timestamp adalah waktu pesan dibuat (dalam milidetik sejak epoch)
+	// Timestamp is when the message was created (in milliseconds since epoch)
 	Timestamp int64 `json:"timestamp"`
-	// Payload adalah data pesan yang sebenarnya
+	// Payload contains the actual message data
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
-// NewMessage membuat pesan baru dengan tipe dan payload tertentu
+// NewMessage creates a new message with specified type and payload
 func NewMessage(msgType MessageType, payload interface{}) (*Message, error) {
 	var payloadJSON json.RawMessage
 	var err error
@@ -58,7 +58,7 @@ func NewMessage(msgType MessageType, payload interface{}) (*Message, error) {
 	}, nil
 }
 
-// ParsePayload mem-parse payload pesan ke dalam struct yang diberikan
+// ParsePayload parses message payload into the provided struct
 func (m *Message) ParsePayload(v interface{}) error {
 	if m.Payload == nil {
 		return nil
@@ -66,62 +66,62 @@ func (m *Message) ParsePayload(v interface{}) error {
 	return json.Unmarshal(m.Payload, v)
 }
 
-// AuthPayload adalah payload untuk pesan autentikasi
+// AuthPayload is for authentication messages
 type AuthPayload struct {
-	// Token adalah token autentikasi
+	// Token is the authentication token
 	Token string `json:"token"`
 }
 
-// RegisterPayload adalah payload untuk pesan pendaftaran tunnel
+// RegisterPayload is for tunnel registration messages
 type RegisterPayload struct {
-	// TunnelType adalah tipe tunnel (http, tcp)
+	// TunnelType specifies the tunnel type (http, tcp)
 	TunnelType string `json:"tunnel_type"`
-	// Subdomain adalah subdomain yang diminta (opsional)
+	// Subdomain is the requested subdomain (optional)
 	Subdomain string `json:"subdomain,omitempty"`
-	// LocalAddr adalah alamat lokal yang spesifik untuk forwarding (opsional)
+	// LocalAddr is the specific local address for forwarding (optional)
 	LocalAddr string `json:"local_addr,omitempty"`
-	// LocalPort adalah port lokal yang akan di-tunnel
+	// LocalPort is the local port to be tunneled
 	LocalPort int `json:"local_port"`
-	// RemotePort adalah port remote yang diminta (untuk TCP, opsional)
+	// RemotePort is the requested remote port (for TCP, optional)
 	RemotePort int `json:"remote_port,omitempty"`
-	// Auth adalah informasi autentikasi untuk tunnel (opsional)
+	// Auth contains tunnel authentication information (optional)
 	Auth *TunnelAuth `json:"auth,omitempty"`
 }
 
-// UnregisterPayload adalah payload untuk pesan penghapusan tunnel
+// UnregisterPayload is for tunnel removal messages
 type UnregisterPayload struct {
-	// TunnelID adalah ID tunnel yang akan dihapus
+	// TunnelID is the ID of the tunnel to be removed
 	TunnelID string `json:"tunnel_id"`
 }
 
-// DataPayload adalah payload untuk pesan data
+// DataPayload is for data messages
 type DataPayload struct {
-	// TunnelID adalah ID tunnel yang terkait dengan data
+	// TunnelID is the ID of the tunnel associated with the data
 	TunnelID string `json:"tunnel_id"`
-	// ConnectionID adalah ID koneksi yang terkait dengan data
+	// ConnectionID is the ID of the connection associated with the data
 	ConnectionID string `json:"connection_id"`
-	// Data adalah data yang dikirim
+	// Data is the actual data being sent
 	Data []byte `json:"data"`
 }
 
-// ErrorPayload adalah payload untuk pesan error
+// ErrorPayload is for error messages
 type ErrorPayload struct {
-	// Code adalah kode error
+	// Code is the error code
 	Code string `json:"code"`
-	// Message adalah pesan error
+	// Message contains the error details
 	Message string `json:"message"`
 }
 
-// RegisterResponsePayload adalah payload untuk respons terhadap pesan pendaftaran
+// RegisterResponsePayload is the response to registration messages
 type RegisterResponsePayload struct {
-	// Success menunjukkan apakah pendaftaran berhasil
+	// Success indicates if the registration was successful
 	Success bool `json:"success"`
-	// TunnelID adalah ID tunnel yang dibuat
+	// TunnelID is the ID of the created tunnel
 	TunnelID string `json:"tunnel_id"`
-	// URL adalah URL publik untuk tunnel HTTP
+	// URL is the public URL for HTTP tunnels
 	URL string `json:"url,omitempty"`
-	// RemotePort adalah port remote untuk tunnel TCP
+	// RemotePort is the remote port for TCP tunnels
 	RemotePort int `json:"remote_port,omitempty"`
-	// Error adalah pesan error jika pendaftaran gagal
+	// Error contains the error message if registration failed
 	Error string `json:"error,omitempty"`
 }

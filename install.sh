@@ -182,14 +182,29 @@ install_dependencies() {
 
 # Fungsi untuk menyiapkan repositori
 setup_repository() {
-    print_info "Menyiapkan repositori..."
+    print_info "Menyiapkan instalasi..."
     
-    # Periksa apakah script dijalankan dari dalam repositori
-    CURRENT_DIR=$(basename "$PWD")
-    if [ "$CURRENT_DIR" = "haxorport-go-client" ]; then
-        print_info "Script dijalankan dari dalam repositori. Menggunakan repositori saat ini."
+    # Gunakan direktori saat ini sebagai sumber instalasi
+    print_info "Menggunakan direktori saat ini sebagai sumber instalasi: $PWD"
+    
+    # Pastikan direktori berisi file-file yang diperlukan
+    if [ ! -f "go.mod" ] || [ ! -f "main.go" ]; then
+        print_error "Direktori saat ini bukan direktori proyek Haxorport yang valid."
+        print_error "Pastikan Anda menjalankan installer dari direktori utama proyek."
+        exit 1
+    fi
+    
+    # Set REPO_DIR ke direktori saat ini
+    REPO_DIR="$PWD"
+    
+    # Periksa apakah direktori adalah repositori git
+    if [ -d ".git" ]; then
+        print_info "Menggunakan repositori Git yang ada..."
         
-        # Pastikan kita berada di branch yang benar
+        # Update repositori
+        git fetch --all
+        
+        # Checkout ke branch yang ditentukan
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
         if [ "$CURRENT_BRANCH" != "$REPO_BRANCH" ]; then
             print_info "Checkout ke branch $REPO_BRANCH..."
@@ -198,36 +213,6 @@ setup_repository() {
         else
             print_info "Sudah berada di branch $REPO_BRANCH. Memperbarui..."
             git pull origin $REPO_BRANCH
-        fi
-        
-        # Gunakan direktori saat ini
-        REPO_DIR="$PWD"
-    else
-        # Jika direktori repositori sudah ada di direktori saat ini, gunakan itu
-        if [ -d "haxorport-go-client" ]; then
-            print_info "Repositori sudah ada. Memperbarui..."
-            cd haxorport-go-client
-            git fetch --all
-            
-            # Checkout ke branch yang ditentukan
-            print_info "Checkout ke branch $REPO_BRANCH..."
-            git checkout $REPO_BRANCH
-            git pull origin $REPO_BRANCH
-            
-            REPO_DIR="$PWD"
-            cd ..
-        else
-            print_info "Mengkloning repositori..."
-            # Clone langsung dari branch yang ditentukan
-            git clone -b $REPO_BRANCH $REPO_URL
-            
-            if [ ! -d "haxorport-go-client" ]; then
-                print_error "Gagal mengkloning repositori."
-                exit 1
-            else
-                print_success "Repositori berhasil dikloning."
-                REPO_DIR="$PWD/haxorport-go-client"
-            fi
         fi
     fi
 }
@@ -264,27 +249,42 @@ install_application() {
     
     cd "$REPO_DIR"
     
-    # Buat direktori instalasi
-    mkdir -p "$INSTALL_DIR"
-    mkdir -p "$CONFIG_DIR"
-    mkdir -p "$LOG_DIR"
+    # Buat direktori konfigurasi dan log
+    print_info "Membuat direktori konfigurasi dan log..."
+    mkdir -p "$CONFIG_DIR" "$LOG_DIR" "$BIN_DIR"
     
-    # Salin file yang diperlukan
-    cp -r bin "$INSTALL_DIR/"
+    # Set permission yang sesuai
+    chmod 755 "$BIN_DIR"
     
-    # Salin konfigurasi produksi
-    cp config.prod.yaml "$CONFIG_DIR/config.yaml"
+    # Salin file konfigurasi jika belum ada
+    if [ -f "$REPO_DIR/config.example.yaml" ] && [ ! -f "$CONFIG_DIR/config.yaml" ]; then
+        print_info "Membuat file konfigurasi default..."
+        cp -f "$REPO_DIR/config.example.yaml" "$CONFIG_DIR/config.yaml"
+        print_success "File konfigurasi berhasil dibuat: $CONFIG_DIR/config.yaml"
+    fi
+    
+    # Kompilasi aplikasi
+    print_info "Mengkompilasi aplikasi..."
+    cd "$REPO_DIR"
+    
+    # Build aplikasi
+    if ! go build -o "$BIN_DIR/haxorport" .; then
+        print_error "Gagal mengkompilasi aplikasi"
+        exit 1
+    fi
+    
+    # Set permission
+    chmod +x "$BIN_DIR/haxorport"
     
     # Sesuaikan konfigurasi log untuk OS
-    if [[ "$OSTYPE" == "darwin"* ]] || grep -q Microsoft /proc/version 2>/dev/null; then
-        # Untuk macOS dan WSL, gunakan path relatif ke home
-        sed -i.bak "s|log_file:.*|log_file: \"$LOG_DIR/haxor-client.log\"|g" "$CONFIG_DIR/config.yaml"
-        sed -i.bak "s|log_level:.*|log_level: warn|g" "$CONFIG_DIR/config.yaml"
-        rm -f "$CONFIG_DIR/config.yaml.bak" 2>/dev/null
-    else
-        # Untuk Linux
-        sed -i "s|log_file:.*|log_file: \"$LOG_DIR/haxor-client.log\"|g" "$CONFIG_DIR/config.yaml"
-        sed -i "s|log_level:.*|log_level: warn|g" "$CONFIG_DIR/config.yaml"
+    if [ -f "$CONFIG_DIR/config.yaml" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]] || grep -q Microsoft /proc/version 2>/dev/null; then
+            # Untuk macOS dan WSL, gunakan path relatif ke home
+            sed -i '' "s|/var/log/haxorport|$LOG_DIR|g" "$CONFIG_DIR/config.yaml"
+        else
+            # Untuk Linux, gunakan path default
+            sed -i "s|/var/log/haxorport|$LOG_DIR|g" "$CONFIG_DIR/config.yaml"
+        fi
     fi
     
     print_info "Level log diatur ke 'warn' untuk mengurangi output debug"

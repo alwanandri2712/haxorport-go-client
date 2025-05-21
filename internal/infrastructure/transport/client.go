@@ -14,7 +14,7 @@ import (
 	"github.com/alwanandri2712/haxorport-go-client/internal/domain/service"
 )
 
-// Client adalah implementasi port.Client
+
 type Client struct {
 	serverAddr   string
 	controlPort  int
@@ -31,12 +31,12 @@ type Client struct {
 	mutex        sync.Mutex
 	logger       port.Logger
 	handlers     map[model.MessageType]func(*model.Message) error
-	subdomain    string // Subdomain yang ditentukan oleh pengguna
+	subdomain    string 
 	config       *model.Config
-	userData     *model.AuthData // Data pengguna dari validasi token
+	userData     *model.AuthData 
 }
 
-// NewClient membuat instance Client baru dari konfigurasi
+
 func NewClient(config *model.Config, logger port.Logger) *Client {
 	return &Client{
 		serverAddr:   config.ServerAddress,
@@ -56,7 +56,7 @@ func NewClient(config *model.Config, logger port.Logger) *Client {
 	}
 }
 
-// Connect menghubungkan ke server haxorport
+
 func (c *Client) Connect() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -65,133 +65,127 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	// Validasi token jika auth diaktifkan
+	
 	if c.config.AuthEnabled && c.config.AuthToken != "" {
-		c.logger.Info("Memvalidasi token autentikasi...")
+		c.logger.Info("Validating authentication token...")
 
-		// Gunakan URL validasi dari konfigurasi jika tersedia
+		
 		validationURL := c.config.AuthValidationURL
 		if validationURL == "" {
-			// Buat URL validasi default berdasarkan server address
+			
 			validationURL = fmt.Sprintf("http://%s/AuthToken/validate", c.config.ServerAddress)
 			if c.config.TLSEnabled {
 				validationURL = fmt.Sprintf("https://%s/AuthToken/validate", c.config.ServerAddress)
 			}
 		}
-		c.logger.Info("Menggunakan URL validasi: %s", validationURL)
+		c.logger.Info("Using validation URL: %s", validationURL)
 
-		// Buat auth service
+		// Create authentication service
 		authService := service.NewAuthService(validationURL)
 
-		// Validasi token dan dapatkan respons lengkap
+		// Validate token
 		response, err := authService.ValidateTokenWithResponse(c.config.AuthToken)
 		if err != nil {
-			c.logger.Error("Gagal memvalidasi token: %v", err)
-			return fmt.Errorf("gagal memvalidasi token: %v", err)
+			c.logger.Error("Failed to validate token: %v", err)
+			return fmt.Errorf("failed to validate token: %v", err)
 		}
 
-		// Periksa apakah token valid
+		// Check response status
 		if response.Status != "success" || response.Code != 200 {
-			c.logger.Error("Token tidak valid: %s", response.Message)
-			return fmt.Errorf("token tidak valid: %s", response.Message)
+			c.logger.Error("Invalid token: %s", response.Message)
+			return fmt.Errorf("invalid token: %s", response.Message)
 		}
 
-		// Simpan data pengguna
+		// Store user data
 		c.userData = &response.Data
-		c.logger.Info("Token berhasil divalidasi untuk pengguna: %s (%s)", c.userData.Fullname, c.userData.Email)
-		c.logger.Info("Langganan: %s, Batas Tunnel: %d/%d", 
-			c.userData.Subscription.Name, 
-			c.userData.Subscription.Limits.Tunnels.Used, 
-			c.userData.Subscription.Limits.Tunnels.Limit)
+		c.logger.Info("Token validated for user: %s (%s)", c.userData.Fullname, c.userData.Email)
+		c.logger.Info("Subscription: %s, Tunnel Limit: %d/%d", c.userData.Subscription.Name, c.userData.Subscription.Limits.Tunnels.Used, c.userData.Subscription.Limits.Tunnels.Limit)
 	}
 
-	// Gunakan protokol yang sesuai berdasarkan konfigurasi TLS
+	// Determine protocol (ws or wss)
 	var protocol string
 
-	// Buat dialer
+	// Create dialer
 	dialer := websocket.DefaultDialer
 
-	// Konfigurasi TLS berdasarkan pengaturan
+	// Enable TLS if configured
 	if c.tlsEnabled {
-		// Gunakan wss:// untuk koneksi HTTPS/SSL
 		protocol = "wss"
 
-		// Konfigurasi TLS
+		// Create TLS config
 		tlsConfig := &tls.Config{}
 
-		// Jika sertifikat dan kunci disediakan, gunakan itu
+		// Load TLS certificate and key if provided
 		if c.tlsCert != "" && c.tlsKey != "" {
 			cert, err := tls.LoadX509KeyPair(c.tlsCert, c.tlsKey)
 			if err != nil {
-				return fmt.Errorf("gagal memuat sertifikat TLS: %v", err)
+				return fmt.Errorf("failed to load TLS certificate: %v", err)
 			}
 			tlsConfig.Certificates = []tls.Certificate{cert}
 		} else {
-			// Jika tidak ada sertifikat, abaikan verifikasi sertifikat
+			// Skip TLS verification if no certificate is provided
 			tlsConfig.InsecureSkipVerify = true
 		}
 
 		dialer.TLSClientConfig = tlsConfig
 	} else {
-		// Gunakan ws:// untuk koneksi HTTP biasa
 		protocol = "ws"
 	}
 
-	// Buat URL WebSocket
+	// Create server URL
 	serverURL := fmt.Sprintf("%s://%s:%d/control", protocol, c.serverAddr, c.controlPort)
-	c.logger.Info("Menghubungkan ke server: %s", serverURL)
+	c.logger.Info("Connecting to server: %s", serverURL)
 
-	// Parse URL
+	// Parse server URL
 	u, err := url.Parse(serverURL)
 	if err != nil {
-		return fmt.Errorf("URL tidak valid: %v", err)
+		return fmt.Errorf("invalid URL: %v", err)
 	}
 
-	// Buat koneksi WebSocket
+	// Establish connection
 	conn, _, err := dialer.Dial(u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("gagal terhubung ke server: %v", err)
+		return fmt.Errorf("failed to connect to server: %v", err)
 	}
 
 	c.conn = conn
 	c.isConnected = true
 
-	// Siapkan pesan autentikasi
+	// Create authentication message
 	authPayload := model.AuthPayload{
 		Token: c.authToken,
 	}
 	authMessage, err := model.NewMessage(model.MessageTypeAuth, authPayload)
 	if err != nil {
 		c.Close()
-		return fmt.Errorf("gagal membuat pesan autentikasi: %v", err)
+		return fmt.Errorf("failed to create authentication message: %v", err)
 	}
 
-	// Marshal pesan ke JSON
+	// Marshal authentication message to JSON
 	data, err := json.Marshal(authMessage)
 	if err != nil {
 		c.Close()
-		return fmt.Errorf("gagal mengkonversi pesan autentikasi ke JSON: %v", err)
+		return fmt.Errorf("failed to convert authentication message to JSON: %v", err)
 	}
 
-	// Kirim pesan autentikasi hanya jika autentikasi diaktifkan
+	// Send authentication message if authentication is enabled
 	if c.authEnabled {
-		// Kirim pesan langsung tanpa memanggil sendMessage (untuk menghindari deadlock)
 		if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-			c.logger.Error("Gagal mengirim pesan autentikasi: %v", err)
+			c.logger.Error("Failed to send authentication message: %v", err)
 			c.Close()
-			return fmt.Errorf("gagal mengirim autentikasi: %v", err)
+			return fmt.Errorf("failed to send authentication: %v", err)
 		}
 	}
 
-	// Mulai goroutine untuk membaca pesan
+	// Start read pump
 	go c.readPump()
 
-	c.logger.Info("Terhubung ke server: %s", serverURL)
+	c.logger.Info("Connected to server: %s", serverURL)
 
 	return nil
 }
 
-// Close menutup koneksi ke server
+// Close closes the client connection.
 func (c *Client) Close() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -200,7 +194,7 @@ func (c *Client) Close() {
 		return
 	}
 
-	c.logger.Info("Menutup koneksi ke server")
+	c.logger.Info("Closing connection")
 
 	if c.conn != nil {
 		c.conn.Close()
@@ -210,14 +204,14 @@ func (c *Client) Close() {
 	c.isConnected = false
 }
 
-// IsConnected mengembalikan status koneksi
+// IsConnected returns whether the client is connected to the server.
 func (c *Client) IsConnected() bool {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	return c.isConnected
 }
 
-// RunWithReconnect menjalankan klien dengan reconnect otomatis
+// RunWithReconnect runs the client with automatic reconnect.
 func (c *Client) RunWithReconnect() {
 	c.mutex.Lock()
 	if c.reconnecting {
@@ -230,9 +224,9 @@ func (c *Client) RunWithReconnect() {
 	go func() {
 		for {
 			if !c.IsConnected() {
-				c.logger.Info("Mencoba menghubungkan kembali ke server...")
+				c.logger.Info("Reconnecting to server...")
 				if err := c.Connect(); err != nil {
-					c.logger.Error("Gagal menghubungkan kembali: %v", err)
+					c.logger.Error("Failed to reconnect: %v", err)
 					time.Sleep(5 * time.Second)
 					continue
 				}
@@ -241,7 +235,6 @@ func (c *Client) RunWithReconnect() {
 		}
 	}()
 
-	// Kirim ping secara berkala
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
@@ -250,12 +243,12 @@ func (c *Client) RunWithReconnect() {
 			if c.IsConnected() {
 				pingMessage, err := model.NewMessage(model.MessageTypePing, nil)
 				if err != nil {
-					c.logger.Error("Gagal membuat pesan ping: %v", err)
+					c.logger.Error("Failed to create ping message: %v", err)
 					continue
 				}
 
 				if err := c.sendMessage(pingMessage); err != nil {
-					c.logger.Error("Gagal mengirim ping: %v", err)
+					c.logger.Error("Failed to send ping: %v", err)
 					c.Close()
 				}
 			}
@@ -263,96 +256,88 @@ func (c *Client) RunWithReconnect() {
 	}()
 }
 
-// RegisterHandler mendaftarkan handler untuk tipe pesan tertentu
+// RegisterHandler registers a message handler for the given message type.
 func (c *Client) RegisterHandler(msgType model.MessageType, handler func(*model.Message) error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.handlers[msgType] = handler
 }
 
-// sendMessage mengirim pesan ke server
+// sendMessage sends a message to the server.
 func (c *Client) sendMessage(msg *model.Message) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	if !c.isConnected || c.conn == nil {
-		return fmt.Errorf("tidak terhubung ke server")
+		return fmt.Errorf("not connected to server")
 	}
 
-	// Marshal pesan ke JSON
+	// Marshal message to JSON
 	data, err := json.Marshal(msg)
 	if err != nil {
-		return fmt.Errorf("gagal mengkonversi pesan ke JSON: %v", err)
+		return fmt.Errorf("failed to convert message to JSON: %v", err)
 	}
 
-	c.logger.Debug("Mengirim pesan: %s", string(data))
+	c.logger.Debug("Sending message: %s", string(data))
 
-	// Kirim pesan
 	if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		c.logger.Error("Gagal mengirim pesan: %v", err)
+		c.logger.Error("Failed to send message: %v", err)
 		c.isConnected = false
-		return fmt.Errorf("gagal mengirim pesan: %v", err)
+		return fmt.Errorf("failed to send message: %v", err)
 	}
 
 	return nil
 }
 
-// readPump membaca pesan dari server
+// readPump reads messages from the server.
 func (c *Client) readPump() {
 	defer c.Close()
 
 	for {
-		// Baca pesan dari WebSocket
 		_, data, err := c.conn.ReadMessage()
 		if err != nil {
-			c.logger.Error("Gagal membaca pesan: %v", err)
+			c.logger.Error("Failed to read message: %v", err)
 			break
 		}
 
-		c.logger.Debug("Menerima pesan: %s", string(data))
+		c.logger.Debug("Received message: %s", string(data))
 
-		// Parse pesan
 		var msg model.Message
 		if err := json.Unmarshal(data, &msg); err != nil {
-			c.logger.Error("Gagal mengurai pesan: %v", err)
+			c.logger.Error("Failed to parse message: %v", err)
 			continue
 		}
 
-		// Tangani pesan pong secara khusus
 		if msg.Type == model.MessageTypePong {
-			c.logger.Debug("Menerima pong dari server")
+			c.logger.Debug("Received pong from server")
 			continue
 		}
 
-		// Tangani pesan dengan handler yang terdaftar
 		c.mutex.Lock()
 		handler, exists := c.handlers[msg.Type]
 		c.mutex.Unlock()
 
 		if exists {
 			if err := handler(&msg); err != nil {
-				c.logger.Error("Error menangani pesan %s: %v", msg.Type, err)
+				c.logger.Error("Error handling message %s: %v", msg.Type, err)
 			}
 		} else {
-			c.logger.Warn("Tidak ada handler untuk pesan tipe: %s", msg.Type)
+			c.logger.Error("No handler for message type: %s", msg.Type)
 		}
 	}
 }
 
-// SendRegisterTunnel mengirim permintaan pendaftaran tunnel
+// SendRegisterTunnel sends a tunnel registration request to the server.
 func (c *Client) SendRegisterTunnel(config model.TunnelConfig) (*model.RegisterResponsePayload, error) {
-	// Simpan subdomain yang ditentukan oleh pengguna
 	c.subdomain = config.Subdomain
 
-	// Buat channel untuk menerima respons
 	responseCh := make(chan *model.RegisterResponsePayload, 1)
 	errCh := make(chan error, 1)
 
-	// Daftarkan handler untuk pesan register
 	c.RegisterHandler(model.MessageTypeRegister, func(msg *model.Message) error {
 		var response model.RegisterResponsePayload
 		if err := msg.ParsePayload(&response); err != nil {
-			errCh <- fmt.Errorf("gagal mengurai respons: %v", err)
+			errCh <- fmt.Errorf("failed to parse registration response: %v", err)
 			return err
 		}
 
@@ -360,19 +345,17 @@ func (c *Client) SendRegisterTunnel(config model.TunnelConfig) (*model.RegisterR
 		return nil
 	})
 
-	// Daftarkan handler untuk pesan error
 	c.RegisterHandler(model.MessageTypeError, func(msg *model.Message) error {
 		var errorPayload model.ErrorPayload
 		if err := msg.ParsePayload(&errorPayload); err != nil {
-			errCh <- fmt.Errorf("gagal mengurai pesan error: %v", err)
+			errCh <- fmt.Errorf("failed to parse error message: %v", err)
 			return err
 		}
 
-		errCh <- fmt.Errorf("error dari server: %s - %s", errorPayload.Code, errorPayload.Message)
+		errCh <- fmt.Errorf("error from server: %s - %s", errorPayload.Code, errorPayload.Message)
 		return nil
 	})
 
-	// Kirim permintaan pendaftaran
 	payload := model.RegisterPayload{
 		TunnelType: string(config.Type),
 		Subdomain:  config.Subdomain,
@@ -384,28 +367,27 @@ func (c *Client) SendRegisterTunnel(config model.TunnelConfig) (*model.RegisterR
 
 	msg, err := model.NewMessage(model.MessageTypeRegister, payload)
 	if err != nil {
-		return nil, fmt.Errorf("gagal membuat pesan: %v", err)
+		return nil, fmt.Errorf("failed to create registration message: %v", err)
 	}
 
 	if err := c.sendMessage(msg); err != nil {
 		return nil, err
 	}
 
-	// Tunggu respons atau error
 	select {
 	case response := <-responseCh:
 		if !response.Success {
-			return nil, fmt.Errorf("pendaftaran tunnel gagal: %s", response.Error)
+			return nil, fmt.Errorf("tunnel registration failed: %s", response.Error)
 		}
 		return response, nil
 	case err := <-errCh:
 		return nil, err
 	case <-time.After(10 * time.Second):
-		return nil, fmt.Errorf("timeout menunggu respons dari server")
+		return nil, fmt.Errorf("timeout waiting for registration response")
 	}
 }
 
-// SendUnregisterTunnel mengirim permintaan penghapusan tunnel
+
 func (c *Client) SendUnregisterTunnel(tunnelID string) error {
 	payload := model.UnregisterPayload{
 		TunnelID: tunnelID,
@@ -419,7 +401,7 @@ func (c *Client) SendUnregisterTunnel(tunnelID string) error {
 	return c.sendMessage(msg)
 }
 
-// SendData mengirim data melalui tunnel
+
 func (c *Client) SendData(tunnelID string, connectionID string, data []byte) error {
 	payload := model.DataPayload{
 		TunnelID:     tunnelID,
@@ -435,36 +417,36 @@ func (c *Client) SendData(tunnelID string, connectionID string, data []byte) err
 	return c.sendMessage(msg)
 }
 
-// GetSubdomain mengembalikan subdomain yang ditentukan oleh pengguna
+
 func (c *Client) GetSubdomain() string {
 	return c.subdomain
 }
 
-// SetSubdomain menetapkan subdomain yang ditentukan oleh pengguna
+
 func (c *Client) SetSubdomain(subdomain string) {
 	c.subdomain = subdomain
 }
 
-// GetUserData mengembalikan data pengguna dari validasi token
+
 func (c *Client) GetUserData() *model.AuthData {
 	return c.userData
 }
 
-// CheckTunnelLimit memeriksa apakah pengguna sudah mencapai batas tunnel
+
 func (c *Client) CheckTunnelLimit() (bool, int, int) {
-	// Jika tidak ada data pengguna, anggap tidak ada batasan
+
 	if c.userData == nil {
 		return false, 0, 0
 	}
 	
-	// Ambil informasi batas tunnel
+
 	limits := c.userData.Subscription.Limits.Tunnels
 	
-	// Periksa apakah sudah mencapai batas
+	// Check if tunnel limit has been reached
 	reached := limits.Reached || limits.Used >= limits.Limit
 	
 	return reached, limits.Used, limits.Limit
 }
 
-// Ensure Client implements port.Client
+
 var _ port.Client = (*Client)(nil)

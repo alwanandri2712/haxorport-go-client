@@ -7,13 +7,13 @@ import (
 	"github.com/alwanandri2712/haxorport-go-client/internal/domain/port"
 )
 
-// TunnelService adalah service untuk mengelola tunnel
+
 type TunnelService struct {
 	tunnelRepo port.TunnelRepository
 	logger     port.Logger
 }
 
-// NewTunnelService membuat instance TunnelService baru
+
 func NewTunnelService(tunnelRepo port.TunnelRepository, logger port.Logger) *TunnelService {
 	return &TunnelService{
 		tunnelRepo: tunnelRepo,
@@ -21,11 +21,11 @@ func NewTunnelService(tunnelRepo port.TunnelRepository, logger port.Logger) *Tun
 	}
 }
 
-// CreateHTTPTunnel membuat tunnel HTTP baru
-func (s *TunnelService) CreateHTTPTunnel(localPort int, subdomain string, auth *model.TunnelAuth) (*model.Tunnel, error) {
-	s.logger.Info("Membuat tunnel HTTP untuk port lokal %d dengan subdomain %s", localPort, subdomain)
 
-	// Buat konfigurasi tunnel
+func (s *TunnelService) CreateHTTPTunnel(localPort int, subdomain string, auth *model.TunnelAuth) (*model.Tunnel, error) {
+	s.logger.Info("Creating HTTP tunnel for local port %d with subdomain %s", localPort, subdomain)
+
+
 	tunnelConfig := model.TunnelConfig{
 		Type:      model.TunnelTypeHTTP,
 		LocalPort: localPort,
@@ -33,72 +33,70 @@ func (s *TunnelService) CreateHTTPTunnel(localPort int, subdomain string, auth *
 		Auth:      auth,
 	}
 
-	// Daftarkan tunnel
+	// Register tunnel
 	tunnel, err := s.tunnelRepo.Register(tunnelConfig)
 	if err != nil {
-		return nil, fmt.Errorf("gagal mendaftarkan tunnel HTTP: %v", err)
+		return nil, fmt.Errorf("failed to register HTTP tunnel: %v", err)
 	}
 
-	s.logger.Info("Tunnel HTTP berhasil dibuat dengan URL: %s", tunnel.URL)
-	// Tidak menampilkan statistik tunnel
+	s.logger.Info("HTTP tunnel created successfully with URL: %s", tunnel.URL)
 
 	return tunnel, nil
 }
 
-// CreateTCPTunnel membuat tunnel TCP baru
+
 func (s *TunnelService) CreateTCPTunnel(config model.TunnelConfig) (*model.Tunnel, error) {
-	// Set default LocalAddr jika kosong
+
 	if config.LocalAddr == "" {
 		config.LocalAddr = "127.0.0.1"
 	}
 
-	// Log the local address and port being used
-	s.logger.Info("Membuat tunnel TCP dari port lokal %d ke %s:%d dengan port remote %d", 
+
+	s.logger.Info("Creating TCP tunnel from local port %d to %s:%d with remote port %d", 
 		config.LocalPort, config.LocalAddr, config.LocalPort, config.RemotePort)
 
-	// Set tipe tunnel
+
 	config.Type = model.TunnelTypeTCP
 
-	// Daftarkan tunnel
+	// Register tunnel
 	tunnel, err := s.tunnelRepo.Register(config)
 	if err != nil {
-		return nil, fmt.Errorf("gagal mendaftarkan tunnel TCP: %v", err)
+		return nil, fmt.Errorf("failed to register TCP tunnel: %v", err)
 	}
 
-	s.logger.Info("Tunnel TCP berhasil dibuat dengan port remote: %d", tunnel.RemotePort)
-	// Tidak menampilkan statistik tunnel
+	s.logger.Info("TCP tunnel created successfully with remote port: %d", tunnel.RemotePort)
 
 	return tunnel, nil
 }
 
-// CloseTunnel menutup tunnel
-func (s *TunnelService) CloseTunnel(tunnelID string) error {
-	s.logger.Info("Menutup tunnel dengan ID: %s", tunnelID)
 
-	// Dapatkan tunnel
+func (s *TunnelService) CloseTunnel(tunnelID string) error {
+	s.logger.Info("Closing tunnel with ID: %s", tunnelID)
+
+
 	tunnel, err := s.tunnelRepo.GetByID(tunnelID)
 	if err != nil {
-		return fmt.Errorf("tunnel tidak ditemukan: %v", err)
+		return fmt.Errorf("tunnel not found: %v", err)
 	}
 
-	s.logger.Info("Menutup tunnel %s dengan tipe %s", tunnelID, tunnel.Config.Type)
+	s.logger.Info("Closing tunnel %s with type %s", tunnelID, tunnel.Config.Type)
 
-	// Hapus tunnel
+
 	if err := s.tunnelRepo.Unregister(tunnelID); err != nil {
-		return fmt.Errorf("gagal menghapus tunnel: %v", err)
+		return fmt.Errorf("failed to remove tunnel: %v", err)
 	}
 
-	s.logger.Info("Tunnel berhasil ditutup: %s", tunnelID)
+	s.logger.Info("Tunnel closed successfully: %s", tunnelID)
 
 	return nil
 }
 
-// GetAllTunnels mengembalikan semua tunnel yang aktif
+
 func (s *TunnelService) GetAllTunnels() []*model.Tunnel {
 	return s.tunnelRepo.GetAll()
 }
 
-// GetTunnelByID mengembalikan tunnel berdasarkan ID
+
 func (s *TunnelService) GetTunnelByID(tunnelID string) (*model.Tunnel, error) {
 	return s.tunnelRepo.GetByID(tunnelID)
 }
