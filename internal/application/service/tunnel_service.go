@@ -46,18 +46,19 @@ func (s *TunnelService) CreateHTTPTunnel(localPort int, subdomain string, auth *
 }
 
 // CreateTCPTunnel membuat tunnel TCP baru
-func (s *TunnelService) CreateTCPTunnel(localPort int, remotePort int) (*model.Tunnel, error) {
-	s.logger.Info("Membuat tunnel TCP untuk port lokal %d dengan port remote %d", localPort, remotePort)
-
-	// Buat konfigurasi tunnel
-	tunnelConfig := model.TunnelConfig{
-		Type:       model.TunnelTypeTCP,
-		LocalPort:  localPort,
-		RemotePort: remotePort,
+func (s *TunnelService) CreateTCPTunnel(config model.TunnelConfig) (*model.Tunnel, error) {
+	// Set default LocalAddr jika kosong
+	if config.LocalAddr == "" {
+		config.LocalAddr = "127.0.0.1"
 	}
 
+	s.logger.Info("Membuat tunnel TCP untuk %s:%d dengan port remote %d", config.LocalAddr, config.LocalPort, config.RemotePort)
+
+	// Set tipe tunnel
+	config.Type = model.TunnelTypeTCP
+
 	// Daftarkan tunnel
-	tunnel, err := s.tunnelRepo.Register(tunnelConfig)
+	tunnel, err := s.tunnelRepo.Register(config)
 	if err != nil {
 		return nil, fmt.Errorf("gagal mendaftarkan tunnel TCP: %v", err)
 	}

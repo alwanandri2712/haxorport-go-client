@@ -376,6 +376,7 @@ func (c *Client) SendRegisterTunnel(config model.TunnelConfig) (*model.RegisterR
 	payload := model.RegisterPayload{
 		TunnelType: string(config.Type),
 		Subdomain:  config.Subdomain,
+		LocalAddr:  config.LocalAddr,
 		LocalPort:  config.LocalPort,
 		RemotePort: config.RemotePort,
 		Auth:       config.Auth,

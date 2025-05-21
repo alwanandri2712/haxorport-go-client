@@ -168,7 +168,7 @@ func (r *TunnelRepository) handleDataMessage(msg *model.Message) error {
 
 // startTunnelListener memulai listener untuk tunnel
 func (r *TunnelRepository) startTunnelListener(tunnel *model.Tunnel) {
-	localAddr := fmt.Sprintf("localhost:%d", tunnel.Config.LocalPort)
+	localAddr := fmt.Sprintf("%s:%d", tunnel.Config.LocalAddr, tunnel.Config.LocalPort)
 	r.logger.Info("Memulai listener untuk tunnel %s pada %s", tunnel.ID, localAddr)
 
 	// Buat listener

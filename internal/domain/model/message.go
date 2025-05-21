@@ -78,6 +78,8 @@ type RegisterPayload struct {
 	TunnelType string `json:"tunnel_type"`
 	// Subdomain adalah subdomain yang diminta (opsional)
 	Subdomain string `json:"subdomain,omitempty"`
+	// LocalAddr adalah alamat lokal yang spesifik untuk forwarding (opsional)
+	LocalAddr string `json:"local_addr,omitempty"`
 	// LocalPort adalah port lokal yang akan di-tunnel
 	LocalPort int `json:"local_port"`
 	// RemotePort adalah port remote yang diminta (untuk TCP, opsional)

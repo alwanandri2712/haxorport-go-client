@@ -42,6 +42,8 @@ type TunnelConfig struct {
 	Type TunnelType
 	// LocalPort adalah port lokal yang akan di-tunnel
 	LocalPort int
+	// LocalAddr adalah alamat lokal tujuan (default: 127.0.0.1)
+	LocalAddr string
 	// Subdomain adalah subdomain yang diminta (untuk HTTP, opsional)
 	Subdomain string
 	// RemotePort adalah port remote yang diminta (untuk TCP, opsional)

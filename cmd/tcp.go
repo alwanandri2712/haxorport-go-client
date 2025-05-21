@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +15,7 @@ var (
 	// TCP command flags
 	tcpLocalPort  int
 	tcpRemotePort int
+	tcpLocalAddr  string
 )
 
 // tcpCmd is the command to create a TCP tunnel
@@ -60,12 +63,22 @@ Examples:
 		// Run client with auto-reconnect
 		Container.Client.RunWithReconnect()
 
+		// Create tunnel config
+		tunnelConfig := model.TunnelConfig{
+			Type:       model.TunnelTypeTCP,
+			LocalPort:  tcpLocalPort,
+			RemotePort: tcpRemotePort,
+			LocalAddr:  tcpLocalAddr,
+		}
+
 		// Create tunnel
-		tunnel, err := Container.TunnelService.CreateTCPTunnel(tcpLocalPort, tcpRemotePort)
+		tunnel, err := Container.TunnelService.CreateTCPTunnel(tunnelConfig)
 		if err != nil {
 			fmt.Printf("Error: Failed to create tunnel: %v\n", err)
 			os.Exit(1)
 		}
+
+		log.Printf("Membuat tunnel TCP untuk %s:%d dengan port remote %d", tunnelConfig.LocalAddr, tunnelConfig.LocalPort, tunnelConfig.RemotePort)
 
 		fmt.Printf("TCP tunnel created successfully!\n")
 		fmt.Printf("Remote Port: %d\n", tunnel.RemotePort)
@@ -93,6 +106,7 @@ func init() {
 	// Add flags
 	tcpCmd.Flags().IntVarP(&tcpLocalPort, "port", "p", 0, "Local port to tunnel")
 	tcpCmd.Flags().IntVarP(&tcpRemotePort, "remote-port", "r", 0, "Requested remote port (optional)")
+	tcpCmd.Flags().StringVarP(&tcpLocalAddr, "local-addr", "l", "127.0.0.1", "Local address to forward to (default: 127.0.0.1)")
 
 	// Mark required flags
 	tcpCmd.MarkFlagRequired("port")
