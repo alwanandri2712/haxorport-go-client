@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/alwanandri2712/haxorport-go-client/internal/domain/model"
@@ -63,12 +65,31 @@ Examples:
 		// Run client with auto-reconnect
 		Container.Client.RunWithReconnect()
 
+		// Parse local address and port
+		localHost := "127.0.0.1"
+		localPort := tcpLocalPort
+		
+		// If tcpLocalAddr contains port, parse it
+		host, _, err := net.SplitHostPort(tcpLocalAddr)
+		if err == nil {
+			// If parsing succeeds, use the host part
+			if host != "" {
+				localHost = host
+			}
+		} else if !strings.Contains(tcpLocalAddr, ":") {
+			// If it's just a hostname/ip without port
+			localHost = tcpLocalAddr
+		} else {
+			fmt.Printf("Error: Invalid local address format: %s\n", tcpLocalAddr)
+			os.Exit(1)
+		}
+
 		// Create tunnel config
 		tunnelConfig := model.TunnelConfig{
 			Type:       model.TunnelTypeTCP,
-			LocalPort:  tcpLocalPort,
+			LocalAddr:  localHost,
+			LocalPort:  localPort,
 			RemotePort: tcpRemotePort,
-			LocalAddr:  tcpLocalAddr,
 		}
 
 		// Create tunnel

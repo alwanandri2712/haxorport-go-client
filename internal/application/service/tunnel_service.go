@@ -52,7 +52,9 @@ func (s *TunnelService) CreateTCPTunnel(config model.TunnelConfig) (*model.Tunne
 		config.LocalAddr = "127.0.0.1"
 	}
 
-	s.logger.Info("Membuat tunnel TCP untuk %s:%d dengan port remote %d", config.LocalAddr, config.LocalPort, config.RemotePort)
+	// Log the local address and port being used
+	s.logger.Info("Membuat tunnel TCP dari port lokal %d ke %s:%d dengan port remote %d", 
+		config.LocalPort, config.LocalAddr, config.LocalPort, config.RemotePort)
 
 	// Set tipe tunnel
 	config.Type = model.TunnelTypeTCP
